@@ -1,0 +1,11 @@
+{
+  "targets": [
+    { "extname": ".js", "module": "commonjs", "moduleResolution": "node" },
+    { "extname": ".mjs", "module": "esnext" }
+  ],
+  "projects": [
+    "packages/core/tsconfig.json",
+    "packages/utils/tsconfig.json",
+    "packages/client/tsconfig.json"
+  ]
+}
