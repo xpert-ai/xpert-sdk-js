@@ -47,6 +47,9 @@ pnpm run examples:basic
 
 # Or run directly with pnpm
 pnpm -F basic-example start
+
+# Knowledge base example
+pnpm -F basic-example start:kb
 ```
 
 ## 📦 Packages

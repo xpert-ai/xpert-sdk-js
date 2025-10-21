@@ -1859,3 +1859,16 @@ export class Client<
 export function getClientConfigHash(client: Client): string | undefined {
   return client["~configHash"];
 }
+
+
+
+export class ContextsClient extends BaseClient {
+
+}
+
+
+
+
+export class KnowledgesClient extends BaseClient {
+  
+}
