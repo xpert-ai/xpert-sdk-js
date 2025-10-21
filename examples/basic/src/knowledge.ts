@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+import fs from "fs";
 import { client } from './client.js';
 
 async function main() {
-  console.log('🚀 Basic Example - TypeScript Monorepo Template');
+  console.log('🚀 Knowledgebase Pipeline Example');
   console.log('================================================\n');
   
   try {
@@ -24,17 +25,20 @@ async function main() {
       throw new Error('No pipelines found to run.');
     }
 
+    // Upload knowledge files and run a thread
+    const fileBuffer = await fs.promises.readFile('./files/knowledge-file.md');
+    const blob = new Blob([fileBuffer as any]);
+    const file = await client.contexts.uploadFile(blob, { filename: 'knowledge-file.md' });
+
+    console.log(file)
+
     const thread = await client.threads.create();
     const stream = client.runs.stream(thread.thread_id, pipelineId, {
       input: { 
-        input: 'What is Xpert SDK?', // more parameters 
+        input: 'What is Xpert SDK?', // more parameters
+        files: [file]
       },
       context: {
-        files: [
-          {
-
-          }
-        ]
       }
     });
     for await (const chunk of stream) {

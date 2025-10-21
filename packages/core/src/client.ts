@@ -1815,6 +1815,11 @@ export class Client<
   public store: StoreClient;
 
   /**
+   * The client for interacting with contexts (files, etc.).
+   */
+  public contexts: ContextsClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1849,6 +1854,7 @@ export class Client<
     this.runs = new RunsClient(config);
     this.crons = new CronsClient(config);
     this.store = new StoreClient(config);
+    this.contexts = new ContextsClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -1861,9 +1867,41 @@ export function getClientConfigHash(client: Client): string | undefined {
 }
 
 
-
 export class ContextsClient extends BaseClient {
+  async uploadFile<TResponse = unknown>(
+    file: Blob | BufferSource | string,
+    options?: { filename?: string }
+  ): Promise<TResponse> {
+    if (typeof FormData === "undefined" || typeof Blob === "undefined") {
+      throw new Error(
+        "File uploads require FormData and Blob support in the current environment."
+      );
+    }
 
+    const isBlob = file instanceof Blob;
+    const blob = isBlob ? file : new Blob([file]);
+
+    let filename = options?.filename;
+    if (
+      filename == null &&
+      typeof File !== "undefined" &&
+      isBlob &&
+      file instanceof File
+    ) {
+      filename = file.name;
+    }
+    if (filename == null || filename.trim() === "") {
+      filename = "upload";
+    }
+
+    const formData = new FormData();
+    formData.append("file", blob, filename);
+
+    return this.fetch<TResponse>("/contexts/file", {
+      method: "POST",
+      body: formData,
+    });
+  }
 }
 
 
