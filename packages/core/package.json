@@ -1,7 +1,7 @@
 {
-  "name": "@myorg/core",
-  "version": "0.1.0",
-  "description": "Core functionality package",
+  "name": "@xpert-ai/xpert-sdk",
+  "version": "0.0.1",
+  "description": "SDK Core functionality package",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -19,17 +19,36 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "bundle": "echo 'Bundle step for core package'",
+    "bundle": "echo 'Bundle step for SDK core package'",
     "dev": "tsc --watch",
     "test": "vitest",
     "test:run": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "p-queue": "^6.6.2",
+    "p-retry": "4",
+    "uuid": "^9.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.16.3",
+    "@types/json-schema": "^7.0.15",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@langchain/core": "^1.0.1",
+    "@langchain/scripts": "^0.1.4",
+    "@tsconfig/recommended": "^1.0.2",
+    "@types/uuid": "^9.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "eslint": "^8.33.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-no-instanceof": "^1.0.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "json-schema": "^0.4.0",
+    "prettier": "^2.8.3"
   },
   "publishConfig": {
     "access": "public"

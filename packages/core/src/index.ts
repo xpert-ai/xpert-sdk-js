@@ -1,37 +1,56 @@
-/**
- * @myorg/core - Core functionality package
- */
+export { Client, getApiKey } from "./client.js";
+export type { ClientConfig, RequestHook } from "./client.js";
 
-export interface CoreConfig {
-  name: string;
-  version: string;
-}
+export type {
+  Assistant,
+  AssistantBase,
+  AssistantGraph,
+  AssistantVersion,
+  Checkpoint,
+  Config,
+  Cron,
+  CronCreateForThreadResponse,
+  CronCreateResponse,
+  DefaultValues,
+  GraphSchema,
+  Interrupt,
+  Item,
+  ListNamespaceResponse,
+  Metadata,
+  Run,
+  SearchItem,
+  SearchItemsResponse,
+  Thread,
+  ThreadState,
+  ThreadStatus,
+  ThreadTask,
+} from "./schema.js";
+export { overrideFetchImplementation } from "./singletons/fetch.js";
 
-export class CoreService {
-  private config: CoreConfig;
-
-  constructor(config: CoreConfig) {
-    this.config = config;
-  }
-
-  getName(): string {
-    return this.config.name;
-  }
-
-  getVersion(): string {
-    return this.config.version;
-  }
-
-  getInfo(): string {
-    return `${this.getName()} v${this.getVersion()}`;
-  }
-}
-
-export const createCoreService = (config: CoreConfig): CoreService => {
-  return new CoreService(config);
-};
-
-export default {
-  CoreService,
-  createCoreService,
-};
+export type {
+  Command,
+  OnConflictBehavior,
+  RunsInvokePayload,
+} from "./types.js";
+export type {
+  AIMessage,
+  FunctionMessage,
+  HumanMessage,
+  Message,
+  RemoveMessage,
+  SystemMessage,
+  ToolMessage,
+} from "./types.messages.js";
+export type {
+  CustomStreamEvent,
+  DebugStreamEvent,
+  ErrorStreamEvent,
+  EventsStreamEvent,
+  FeedbackStreamEvent,
+  MessagesStreamEvent,
+  MessagesTupleStreamEvent,
+  MetadataStreamEvent,
+  StreamMode,
+  UpdatesStreamEvent,
+  ValuesStreamEvent,
+} from "./types.stream.js";
