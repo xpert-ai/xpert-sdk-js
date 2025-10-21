@@ -1,90 +1,32 @@
-# Dependencies
-node_modules/
-.pnpm-store/
-
-# Build outputs
-dist/
-build/
-.temp/
-*.tsbuildinfo
-
-# Environment files
-.env
-.env.local
-.env.production
-.env.test
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# Temporary folders
-tmp/
-temp/
+index.cjs
+index.js
+index.d.ts
+index.d.cts
+client.cjs
+client.js
+client.d.ts
+client.d.cts
+auth.cjs
+auth.js
+auth.d.ts
+auth.d.cts
+react.cjs
+react.js
+react.d.ts
+react.d.cts
+logging.cjs
+logging.js
+logging.d.ts
+logging.d.cts
+react-ui.cjs
+react-ui.js
+react-ui.d.ts
+react-ui.d.cts
+react-ui/server.cjs
+react-ui/server.js
+react-ui/server.d.ts
+react-ui/server.d.cts
+node_modules
+dist
+.yarn
+docs
