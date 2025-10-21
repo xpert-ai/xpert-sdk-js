@@ -1,5 +1,5 @@
 /**
- * @myorg/utils - Utility functions package
+ * @xpert-ai/utils - Utility functions package
  */
 
 export const isString = (value: unknown): value is string => {

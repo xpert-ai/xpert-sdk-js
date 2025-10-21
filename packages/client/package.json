@@ -1,5 +1,5 @@
 {
-  "name": "@myorg/client",
+  "name": "@xpert-ai/client",
   "version": "0.1.0",
   "description": "Client package that uses core and utils",
   "type": "module",
@@ -25,8 +25,8 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@myorg/core": "workspace:^",
-    "@myorg/utils": "workspace:^"
+    "@xpert-ai/xpert-sdk": "workspace:^",
+    "@xpert-ai/utils": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.16.3",

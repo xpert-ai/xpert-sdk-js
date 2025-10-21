@@ -79,15 +79,15 @@ importers:
 
   examples/basic:
     dependencies:
-      '@myorg/client':
+      '@xpert-ai/client':
         specifier: workspace:^
         version: link:../../packages/client
-      '@myorg/core':
-        specifier: workspace:^
-        version: link:../../packages/core
-      '@myorg/utils':
+      '@xpert-ai/utils':
         specifier: workspace:^
         version: link:../../packages/utils
+      '@xpert-ai/xpert-sdk':
+        specifier: workspace:^
+        version: link:../../packages/core
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -98,12 +98,12 @@ importers:
 
   packages/client:
     dependencies:
-      '@myorg/core':
-        specifier: workspace:^
-        version: link:../core
-      '@myorg/utils':
+      '@xpert-ai/utils':
         specifier: workspace:^
         version: link:../utils
+      '@xpert-ai/xpert-sdk':
+        specifier: workspace:^
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.16.3

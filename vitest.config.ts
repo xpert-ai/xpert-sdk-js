@@ -21,9 +21,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@myorg/core': './packages/core/src',
-      '@myorg/utils': './packages/utils/src',
-      '@myorg/client': './packages/client/src',
+      '@xpert-ai/xpert-sdk': './packages/core/src',
+      '@xpert-ai/utils': './packages/utils/src',
+      '@xpert-ai/client': './packages/client/src',
     },
   },
 });

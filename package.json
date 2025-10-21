@@ -5,9 +5,9 @@
   "description": "A TypeScript monorepo template with pnpm workspace",
   "scripts": {
     "clean": "tsc-multi --clean",
-    "prebuild": "pnpm -F @myorg/* -r prebuild",
+    "prebuild": "pnpm -F @xpert-ai/* -r prebuild",
     "build": "tsc-multi",
-    "postbuild": "pnpm -r -F @myorg/* bundle",
+    "postbuild": "pnpm -r -F @xpert-ai/* bundle",
     "packages:dev": "tsc-multi --watch",
     "docs:dev": "pnpm -F docs dev",
     "docs:build": "pnpm -F docs build",
@@ -21,7 +21,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "ci:publish": "pnpm publish -r --no-git-checks",
-    "bump-version": "changeset version && pnpm -F @myorg/* prebuild",
+    "bump-version": "changeset version && pnpm -F @xpert-ai/* prebuild",
     "prepare": "husky",
     "clear:deps": "rm -rf node_modules && pnpm -r exec rm -rf node_modules",
     "examples:basic": "pnpm -F basic-example start"

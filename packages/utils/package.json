@@ -1,5 +1,5 @@
 {
-  "name": "@myorg/utils",
+  "name": "@xpert-ai/utils",
   "version": "0.1.0",
   "description": "Utility functions package",
   "type": "module",

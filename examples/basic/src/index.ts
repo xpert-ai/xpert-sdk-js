@@ -1,38 +1,24 @@
 #!/usr/bin/env node
 
-import { createClient } from '@myorg/client';
-import { capitalize } from '@myorg/utils';
+import { Client } from '@xpert-ai/xpert-sdk';
+import { capitalize } from '@xpert-ai/utils';
 
 async function main() {
   console.log('🚀 Basic Example - TypeScript Monorepo Template');
   console.log('================================================\n');
 
   // Create a client instance
-  const client = createClient({
-    name: 'Basic Example Client',
-    version: '1.0.0',
-    timeout: 3000,
-    retries: 2,
+  const client = new Client({
+    apiUrl: 'http://localhost:3000/api/ai',
+    apiKey: 'sk-x-Qn'
   });
 
   try {
     // Connect to the service
     console.log('📡 Connecting to service...');
-    const connectionResult = await client.connect();
+    const connectionResult = await client.assistants.count()
     console.log(`✅ ${connectionResult}\n`);
-
-    // Get status
-    console.log('📊 Service Status:');
-    const status = client.getStatus();
-    Object.entries(status).forEach(([key, value]) => {
-      console.log(`   ${capitalize(key)}: ${value}`);
-    });
-    console.log();
-
-    // Make a request
-    console.log('📤 Making a request...');
-    const response = await client.request('Hello from basic example!');
-    console.log(`✅ ${response}\n`);
+    console.log(capitalize('connection successful!'));
 
     console.log('🎉 Example completed successfully!');
   } catch (error) {

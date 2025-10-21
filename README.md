@@ -51,13 +51,13 @@ pnpm -F basic-example start
 
 ## 📦 Packages
 
-### @myorg/core
+### @xpert-ai/core
 Core functionality package providing base services and configuration.
 
-### @myorg/utils  
+### @xpert-ai/utils  
 Collection of utility functions for common operations like type checking, formatting, and async operations.
 
-### @myorg/client
+### @xpert-ai/client
 Client package that demonstrates how to compose functionality from multiple packages within the monorepo.
 
 ## 🛠️ Development
@@ -79,13 +79,13 @@ Client package that demonstrates how to compose functionality from multiple pack
 
 ```bash
 # Add dependency to a specific package
-pnpm -F @myorg/core add lodash
+pnpm -F @xpert-ai/core add lodash
 
 # Add dev dependency to root
 pnpm add -D -w prettier
 
 # Add workspace dependency
-pnpm -F @myorg/client add @myorg/core
+pnpm -F @xpert-ai/client add @xpert-ai/core
 ```
 
 ### Versioning & Publishing
@@ -114,7 +114,7 @@ Run tests:
 pnpm test                    # Run all tests
 pnpm test:watch              # Watch mode  
 pnpm test:coverage           # With coverage
-pnpm -F @myorg/core test     # Package-specific tests
+pnpm -F @xpert-ai/core test     # Package-specific tests
 ```
 
 ## 🔧 Tools & Configuration
