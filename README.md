@@ -7,8 +7,8 @@ A modern TypeScript monorepo template built with pnpm workspaces, featuring mult
 ```
 ├── packages/               # Core packages
 │   ├── core/              # Core functionality
-│   ├── utils/             # Utility functions  
-│   └── client/            # Client package that uses core & utils
+│   ├── utils/             # Utility functions // Not used yet
+│   └── client/            # Client package that uses core & utils // Not used yet
 ├── examples/              # Usage examples
 │   ├── basic/             # Basic usage example
 │   └── advanced/          # Advanced usage example
