@@ -33,29 +33,15 @@ async function main() {
     console.log(file)
 
     const thread = await client.threads.create();
-    const stream = client.runs.stream(thread.thread_id, pipelineId, {
+    const result = await client.runs.wait(thread.thread_id, pipelineId, {
       input: { 
         input: 'What is Xpert SDK?', // more parameters
         files: [file]
       },
-      context: {
-      }
+      context: {}
     });
-    for await (const chunk of stream) {
-      const data = (<{ type: 'message', data: string | {type: 'text' | string; text?: string; data?: unknown} }>chunk.data)
-      // Output text messages only
-      if (data.type === 'message') {
-        if (typeof data.data === 'string') {
-          process.stdout.write(data.data)
-        } else if (data.data.type === 'text') {
-          process.stdout.write(data.data.text ?? '')
-        } else {
-          console.log(`Component:`, data.data);
-        }
-      } else {
-        console.log(`Non-message chunk:`, chunk.data);
-      }
-    }
+    
+    console.log('🧵 Knowledge thread result:', result);
 
     console.log('🎉 Example completed successfully!');
   } catch (error) {

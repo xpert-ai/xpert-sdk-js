@@ -28,6 +28,7 @@ import {
   ThreadSortBy,
   ThreadState,
   ThreadStatus,
+  Knowledgebase,
 } from "./schema.js";
 import type {
   Command,
@@ -1820,6 +1821,11 @@ export class Client<
   public contexts: ContextsClient;
 
   /**
+   * The client for interacting with knowledgebases.
+   */
+  public knowledges: KnowledgesClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1855,6 +1861,7 @@ export class Client<
     this.crons = new CronsClient(config);
     this.store = new StoreClient(config);
     this.contexts = new ContextsClient(config);
+    this.knowledges = new KnowledgesClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -1904,9 +1911,11 @@ export class ContextsClient extends BaseClient {
   }
 }
 
-
-
-
 export class KnowledgesClient extends BaseClient {
-  
+  async create(payload: Partial<Knowledgebase>): Promise<Knowledgebase> {
+    return this.fetch<Knowledgebase>(`/knowledges`, {
+      method: "POST",
+      json: payload,
+    });
+  }
 }

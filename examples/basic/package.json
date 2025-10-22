@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "start:kb": "tsx src/knowledge.ts",
+    "start:pipeline": "tsx src/knowledge.ts",
+    "start:kb": "tsx src/knowledgebase.ts",
     "dev": "tsx --watch src/index.ts"
   },
   "dependencies": {

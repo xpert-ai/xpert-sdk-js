@@ -416,3 +416,79 @@ export type CronSelectField =
   | "next_run_date"
   | "metadata"
   | "now";
+
+// Knowledgebase types
+
+export interface Knowledgebase {
+  workspaceId: string;
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  permission?: KnowledgebasePermission
+  recall?: TKBRecallParams
+  copilotModel?: TCopilotModel
+}
+
+/**
+ * Knowledgebase permission levels
+ */
+export enum KnowledgebasePermission {
+  /**
+   * Only visible to you
+   * @default
+   */
+  Private = 'private',
+  /**
+   * Visible to all members in the organization
+   */
+  Organization = 'organization',
+  /**
+   * Visible to all members in the tenant
+   */
+  Public = 'public'
+}
+
+/**
+ * Recall parameters
+ */
+export type TKBRecallParams = {
+  /**
+   * Top K of result chunks
+   */
+  topK?: number
+  /**
+   * At least the similarity threshold
+   */
+  score?: number
+
+  /**
+   * Weight in EnsembleRetriever
+   */
+  weight?: number
+}
+
+export type TCopilotModel = {
+  copilotId?: string
+  modelType?: AiModelTypeEnum
+  model?: string
+  /**
+   * Details config for ai model
+   */
+  options?: TCopilotModelOptions
+}
+
+export enum AiModelTypeEnum {
+  LLM = "llm",
+  TEXT_EMBEDDING = "text-embedding",
+  RERANK = "rerank",
+  SPEECH2TEXT = "speech2text",
+  MODERATION = "moderation",
+  TTS = "tts",
+  TEXT2IMG = "text2img"
+}
+
+export type TCopilotModelOptions = {
+  [key: string]: any
+}
