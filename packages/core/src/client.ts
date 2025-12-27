@@ -29,6 +29,10 @@ import {
   ThreadState,
   ThreadStatus,
   Knowledgebase,
+  ChatConversation,
+  ChatMessage,
+  ChatMessageFeedback,
+  Pagination,
 } from "./schema.js";
 import type {
   Command,
@@ -1826,6 +1830,11 @@ export class Client<
   public knowledges: KnowledgesClient;
 
   /**
+   * The client for interacting with conversations.
+   */
+  public conversations: ConversationsClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1862,6 +1871,7 @@ export class Client<
     this.store = new StoreClient(config);
     this.contexts = new ContextsClient(config);
     this.knowledges = new KnowledgesClient(config);
+    this.conversations = new ConversationsClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -1919,3 +1929,228 @@ export class KnowledgesClient extends BaseClient {
     });
   }
 }
+
+// Conversations Client
+export class ConversationsClient extends BaseClient {
+  async create(payload: Partial<ChatConversation>): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations`, {
+      method: "POST",
+      json: payload,
+    });
+  }
+
+  async get(conversationId: string): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  }
+
+  async update(
+    conversationId: string,
+    payload: Partial<ChatConversation>
+  ): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations/${conversationId}`, {
+      method: "PATCH",
+      json: payload,
+    });
+  }
+
+  async delete(conversationId: string): Promise<void> {
+    await this.fetch<void>(`/conversations/${conversationId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async search(query?: {
+    where?: Record<string, unknown>;
+    order?: Record<string, "ASC" | "DESC">;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }): Promise<Pagination<ChatConversation>> {
+    return this.fetch<Pagination<ChatConversation>>(`/conversations/search`, {
+      method: "POST",
+      json: {
+        where: query?.where,
+        order: query?.order,
+        limit: query?.limit,
+        offset: query?.offset,
+        search: query?.search,
+      },
+    });
+  }
+
+  async listMessages(
+    conversationId: string,
+    query?: { limit?: number; offset?: number }
+  ): Promise<Pagination<ChatMessage>> {
+    return this.fetch<Pagination<ChatMessage>>(
+      `/conversations/${conversationId}/messages`,
+      {
+        params: {
+          limit: query?.limit,
+          offset: query?.offset,
+        },
+      }
+    );
+  }
+
+  async searchMessages(
+    conversationId: string,
+    query?: {
+      where?: Record<string, unknown>;
+      order?: Record<string, "ASC" | "DESC">;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Pagination<ChatMessage>> {
+    return this.fetch<Pagination<ChatMessage>>(
+      `/conversations/${conversationId}/messages/search`,
+      {
+        method: "POST",
+        json: {
+          where: query?.where,
+          order: query?.order,
+          limit: query?.limit,
+          offset: query?.offset,
+        },
+      }
+    );
+  }
+
+  async createMessage(
+    conversationId: string,
+    payload: Partial<ChatMessage>
+  ): Promise<ChatMessage> {
+    return this.fetch<ChatMessage>(`/conversations/${conversationId}/messages`, {
+      method: "POST",
+      json: payload,
+    });
+  }
+
+  async getMessage(
+    conversationId: string,
+    messageId: string
+  ): Promise<ChatMessage> {
+    return this.fetch<ChatMessage>(
+      `/conversations/${conversationId}/messages/${messageId}`
+    );
+  }
+
+  async updateMessage(
+    conversationId: string,
+    messageId: string,
+    payload: Partial<ChatMessage>
+  ): Promise<ChatMessage> {
+    return this.fetch<ChatMessage>(
+      `/conversations/${conversationId}/messages/${messageId}`,
+      {
+        method: "PATCH",
+        json: payload,
+      }
+    );
+  }
+
+  async deleteMessage(
+    conversationId: string,
+    messageId: string
+  ): Promise<void> {
+    await this.fetch<void>(
+      `/conversations/${conversationId}/messages/${messageId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async listFeedbacks(
+    conversationId: string,
+    messageId: string,
+    query?: { limit?: number; offset?: number }
+  ): Promise<Pagination<ChatMessageFeedback>> {
+    return this.fetch<Pagination<ChatMessageFeedback>>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks`,
+      {
+        params: {
+          limit: query?.limit,
+          offset: query?.offset,
+        },
+      }
+    );
+  }
+
+  async searchFeedbacks(
+    conversationId: string,
+    messageId: string,
+    query?: {
+      where?: Record<string, unknown>;
+      order?: Record<string, "ASC" | "DESC">;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Pagination<ChatMessageFeedback>> {
+    return this.fetch<Pagination<ChatMessageFeedback>>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks/search`,
+      {
+        method: "POST",
+        json: {
+          where: query?.where,
+          order: query?.order,
+          limit: query?.limit,
+          offset: query?.offset,
+        },
+      }
+    );
+  }
+
+  async createFeedback(
+    conversationId: string,
+    messageId: string,
+    payload: Partial<ChatMessageFeedback>
+  ): Promise<ChatMessageFeedback> {
+    return this.fetch<ChatMessageFeedback>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks`,
+      {
+        method: "POST",
+        json: payload,
+      }
+    );
+  }
+
+  async getFeedback(
+    conversationId: string,
+    messageId: string,
+    feedbackId: string
+  ): Promise<ChatMessageFeedback> {
+    return this.fetch<ChatMessageFeedback>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks/${feedbackId}`
+    );
+  }
+
+  async updateFeedback(
+    conversationId: string,
+    messageId: string,
+    feedbackId: string,
+    payload: Partial<ChatMessageFeedback>
+  ): Promise<ChatMessageFeedback> {
+    return this.fetch<ChatMessageFeedback>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks/${feedbackId}`,
+      {
+        method: "PATCH",
+        json: payload,
+      }
+    );
+  }
+
+  async deleteFeedback(
+    conversationId: string,
+    messageId: string,
+    feedbackId: string
+  ): Promise<void> {
+    await this.fetch<void>(
+      `/conversations/${conversationId}/messages/${messageId}/feedbacks/${feedbackId}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+}
+

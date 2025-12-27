@@ -23,6 +23,13 @@ export type {
   Thread,
   ThreadState,
   ThreadStatus,
+  ChatConversation,
+  ChatConversationFrom,
+  ChatConversationStatus,
+  ChatMessage,
+  ChatMessageFeedback,
+  ChatMessageFeedbackRating,
+  Pagination,
   ThreadTask,
 } from "./schema.js";
 export { overrideFetchImplementation } from "./singletons/fetch.js";

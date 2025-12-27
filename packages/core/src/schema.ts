@@ -492,3 +492,65 @@ export enum AiModelTypeEnum {
 export type TCopilotModelOptions = {
   [key: string]: any
 }
+
+// Conversation types
+export type Pagination<T> = {
+  items: T[];
+  total: number;
+};
+
+export type ChatConversationStatus = "idle" | "busy" | "interrupted" | "error";
+
+export type ChatConversationFrom =
+  | "platform"
+  | "webapp"
+  | "debugger"
+  | "knowledge"
+  | "job"
+  | "api"
+  | "feishu"
+  | "lark"
+  | "dingtalk"
+  | "wecom";
+
+export interface ChatConversation {
+  id: string;
+  threadId: string;
+  title?: string;
+  status?: ChatConversationStatus;
+  from?: ChatConversationFrom;
+  fromEndUserId?: string;
+  options?: Record<string, unknown>;
+  error?: string;
+  operation?: Record<string, unknown>;
+  xpertId?: string;
+  projectId?: string;
+  taskId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId?: string;
+  role?: string;
+  content?: unknown;
+  reasoning?: unknown;
+  status?: string;
+  error?: string;
+  executionId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ChatMessageFeedbackRating = "like" | "dislike";
+
+export interface ChatMessageFeedback {
+  id: string;
+  conversationId?: string;
+  messageId?: string;
+  rating?: ChatMessageFeedbackRating;
+  content?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
