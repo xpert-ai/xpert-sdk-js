@@ -4,7 +4,7 @@ A modern TypeScript monorepo template built with pnpm workspaces, featuring mult
 
 ## 🏗️ Project Structure
 
-```
+```ini
 ├── packages/               # Core packages
 │   ├── core/              # Core functionality
 │   ├── utils/             # Utility functions // Not used yet
@@ -55,12 +55,15 @@ pnpm -F basic-example start:kb
 ## 📦 Packages
 
 ### @xpert-ai/core
+
 Core functionality package providing base services and configuration.
 
-### @xpert-ai/utils  
+### @xpert-ai/utils
+
 Collection of utility functions for common operations like type checking, formatting, and async operations.
 
 ### @xpert-ai/client
+
 Client package that demonstrates how to compose functionality from multiple packages within the monorepo.
 
 ## 🛠️ Development
@@ -103,7 +106,7 @@ pnpm changeset
 pnpm bump-version
 
 # Publish to npm
-pnpm ci:publish
+pnpm publish --filter @xpert-ai/xpert-sdk --access public --tag latest
 ```
 
 ## 🧪 Testing
@@ -113,6 +116,7 @@ pnpm ci:publish
 - **Config**: `vitest.config.ts`
 
 Run tests:
+
 ```bash
 pnpm test                    # Run all tests
 pnpm test:watch              # Watch mode  
@@ -133,8 +137,10 @@ pnpm -F @xpert-ai/core test     # Package-specific tests
 ## 📁 File Structure Details
 
 ### Packages
+
 Each package follows a consistent structure:
-```
+
+```ini
 packages/[package-name]/
 ├── src/               # Source code
 ├── tests/             # Test files
@@ -144,6 +150,7 @@ packages/[package-name]/
 ```
 
 ### Configuration Files
+
 - `pnpm-workspace.yaml` - Workspace configuration
 - `tsconfig.json` - Root TypeScript config
 - `tsc-multi.json` - Multi-package build configuration
