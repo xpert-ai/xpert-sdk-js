@@ -31,6 +31,7 @@ export type {
   ChatMessageFeedbackRating,
   Pagination,
   ThreadTask,
+  StorageFile,
 } from "./schema.js";
 export { overrideFetchImplementation } from "./singletons/fetch.js";
 

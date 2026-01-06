@@ -1919,6 +1919,12 @@ export class ContextsClient extends BaseClient {
       body: formData,
     });
   }
+
+  async deleteFile(id: string): Promise<void> {
+    await this.fetch<void>(`/contexts/file/${id}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 export class KnowledgesClient extends BaseClient {

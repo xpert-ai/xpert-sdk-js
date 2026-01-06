@@ -554,3 +554,27 @@ export interface ChatMessageFeedback {
   createdAt?: string;
   updatedAt?: string;
 }
+
+/**
+ * Represents a file stored on the server.
+ * Returned by the file upload API.
+ */
+export interface StorageFile {
+  id: string;
+  /** File storage path/key */
+  file: string;
+  /** File access URL */
+  url?: string;
+  /** Original filename */
+  originalName?: string;
+  /** File encoding */
+  encoding?: string;
+  /** File size in bytes */
+  size?: number;
+  /** MIME type */
+  mimetype?: string;
+  /** File storage provider (LOCAL, S3, OSS, etc.) */
+  storageProvider?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
