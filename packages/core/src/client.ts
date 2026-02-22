@@ -24,6 +24,7 @@ import {
   SortOrder,
   Subgraphs,
   Thread,
+  ThreadContextUsage,
   ThreadSelectField,
   ThreadSortBy,
   ThreadState,
@@ -708,6 +709,24 @@ export class ThreadsClient<
     threadId: string
   ): Promise<Thread<ValuesType>> {
     return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`);
+  }
+
+  /**
+   * Get latest-run context usage for a agent in thread.
+   *
+   * @param threadId ID of the thread.
+   * @param options.agentKey Agent key for usage filtering.
+   * @returns Context usage summary for the latest run tree.
+   */
+  async getContextUsage(
+    threadId: string,
+    options?: { agentKey?: string }
+  ): Promise<ThreadContextUsage> {
+    return this.fetch<ThreadContextUsage>(`/threads/${threadId}/context-usage`, {
+      params: {
+        agentKey: options?.agentKey,
+      },
+    });
   }
 
   /**
@@ -2159,4 +2178,3 @@ export class ConversationsClient extends BaseClient {
     );
   }
 }
-

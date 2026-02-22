@@ -21,6 +21,7 @@ export type {
   SearchItem,
   SearchItemsResponse,
   Thread,
+  ThreadContextUsage,
   ThreadState,
   ThreadStatus,
   ChatConversation,

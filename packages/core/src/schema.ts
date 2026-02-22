@@ -206,6 +206,22 @@ export interface Thread<ValuesType = DefaultValues> {
   interrupts: Record<string, Array<Interrupt>>;
 }
 
+export interface ThreadContextUsage {
+  thread_id: string;
+  agent_key: string | null;
+  run_id: string | null;
+  updated_at: string | null;
+  usage: {
+    context_tokens: number;
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    embed_tokens: number;
+    total_price: number;
+    currency: string | null;
+	};
+}
+
 export interface Cron {
   /** The ID of the cron */
   cron_id: string;
