@@ -509,6 +509,126 @@ export type TCopilotModelOptions = {
   [key: string]: any
 }
 
+// Chat request types
+
+/**
+ * Human input payload for a chat request.
+ */
+export interface ChatRequestHuman {
+  input?: string;
+  files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
+  [key: string]: unknown;
+}
+
+/**
+ * State passed alongside a chat request.
+ */
+export type ChatState = {
+  human?: ChatRequestHuman;
+} & Record<string, unknown>;
+
+/**
+ * Target reference for resume/retry actions.
+ */
+export interface ChatTarget {
+  aiMessageId?: string;
+  executionId?: string;
+}
+
+/**
+ * Decision payload for resuming an interrupted chat.
+ */
+export interface ChatResumeDecision {
+  type: 'confirm' | 'reject';
+  payload?: unknown;
+}
+
+/**
+ * Patch payload for modifying an interrupted chat.
+ */
+export interface ChatInterruptPatch {
+  agentKey?: string;
+  toolCalls?: unknown[];
+  update?: unknown;
+}
+
+/**
+ * Send a new message in a chat run.
+ */
+export interface ChatSendRequest {
+  action: 'send';
+  conversationId?: string;
+  projectId?: string;
+  environmentId?: string;
+  sandboxEnvironmentId?: string;
+  message: {
+    clientMessageId?: string;
+    input: ChatRequestHuman;
+  };
+  state?: ChatState;
+}
+
+/**
+ * Resume an interrupted chat run.
+ */
+export interface ChatResumeRequest {
+  action: 'resume';
+  conversationId: string;
+  target: ChatTarget;
+  decision: ChatResumeDecision;
+  patch?: ChatInterruptPatch;
+  state?: ChatState;
+}
+
+/**
+ * Retry a failed chat run.
+ */
+export interface ChatRetryRequest {
+  action: 'retry';
+  conversationId: string;
+  source: ChatTarget;
+  environmentId?: string;
+  sandboxEnvironmentId?: string;
+  checkpointId?: string;
+}
+
+/**
+ * Discriminated union of all chat request actions.
+ * Maps to the server-side `TChatRequest` (v2) validated by `RunCreateStreamHandler`.
+ */
+export type ChatRequest = ChatSendRequest | ChatResumeRequest | ChatRetryRequest;
+
+/**
+ * Legacy chat request format (v1).
+ * The server normalizes this into a v2 {@link ChatRequest} automatically.
+ * Prefer the v2 format for new code.
+ */
+export interface LegacyChatRequest {
+  input: ChatRequestHuman;
+  state?: ChatState;
+  agentKey?: string;
+  projectId?: string;
+  conversationId?: string;
+  environmentId?: string;
+  id?: string;
+  executionId?: string;
+  confirm?: boolean;
+  command?: {
+    resume?: unknown;
+    update?: unknown;
+    toolCalls?: unknown[];
+    agentKey?: string;
+  };
+  retry?: boolean;
+  sandboxEnvironmentId?: string;
+}
+
+/**
+ * All accepted run input formats.
+ * The server accepts both v2 {@link ChatRequest} and {@link LegacyChatRequest}.
+ */
+export type RunInput = ChatRequest | LegacyChatRequest;
+
 // Conversation types
 export type Pagination<T> = {
   items: T[];

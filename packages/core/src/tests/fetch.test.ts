@@ -68,7 +68,7 @@ describe.each([["global"], ["mocked"]])(
 
         // Then clear & run the function
         await client.runs.create(thread.thread_id, "somegraph", {
-          input: { foo: "bar" },
+          input: { action: 'send', message: { input: { input: 'test' } } },
         });
         expect(expectedFetchMock).toHaveBeenCalledTimes(1);
         expect(unexpectedFetchMock).not.toHaveBeenCalled();
