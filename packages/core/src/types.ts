@@ -1,5 +1,5 @@
 import { type LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
-import { Checkpoint, Config, Metadata } from "./schema.js";
+import { ChatRequest, Checkpoint, Config, Metadata, RunInput } from "./schema.js";
 import { StreamMode } from "./types.stream.js";
 
 export type MultitaskStrategy = "reject" | "interrupt" | "rollback" | "enqueue";
@@ -45,9 +45,11 @@ export interface Command {
 
 export interface RunsInvokePayload {
   /**
-   * Input to the run. Pass `null` to resume from the current state of the thread.
+   * Input to the run. Must be a valid {@link ChatRequest} (send / resume / retry)
+   * or a {@link LegacyChatRequest}.
+   * Pass `null` to resume from the current state of the thread.
    */
-  input?: Record<string, unknown> | null;
+  input?: RunInput | null;
 
   /**
    * Metadata for the run.

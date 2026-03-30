@@ -7,5 +7,10 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["basic-example", "docs"]
+  "ignore": [
+    "basic-example",
+    "docs",
+    "@xpert-ai/client",
+    "@xpert-ai/utils"
+  ]
 }
