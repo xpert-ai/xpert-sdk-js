@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.5
+
+### Patch Changes
+
+- c1efa65: new chatRequest type
+
 ## 0.0.4
 
 ### Patch Changes
