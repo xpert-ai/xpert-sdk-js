@@ -23,9 +23,9 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
@@ -39,10 +39,6 @@ jobs:
           version: pnpm bump-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update npm for trusted publishing
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        run: npm install -g npm@11
 
       - name: Publish to npm with trusted publishing
         if: steps.changesets.outputs.hasChangesets == 'false'
