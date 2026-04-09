@@ -22,8 +22,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@xpert-ai/xpert-sdk': './packages/core/src',
-      '@xpert-ai/utils': './packages/utils/src',
-      '@xpert-ai/client': './packages/client/src',
     },
   },
 });

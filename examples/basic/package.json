@@ -11,9 +11,7 @@
     "dev": "tsx --watch src/index.ts"
   },
   "dependencies": {
-    "@xpert-ai/xpert-sdk": "workspace:^",
-    "@xpert-ai/client": "workspace:^",
-    "@xpert-ai/utils": "workspace:^"
+    "@xpert-ai/xpert-sdk": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "catalog:",

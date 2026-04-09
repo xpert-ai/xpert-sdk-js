@@ -85,12 +85,6 @@ importers:
 
   examples/basic:
     dependencies:
-      '@xpert-ai/client':
-        specifier: workspace:^
-        version: link:../../packages/client
-      '@xpert-ai/utils':
-        specifier: workspace:^
-        version: link:../../packages/utils
       '@xpert-ai/xpert-sdk':
         specifier: workspace:^
         version: link:../../packages/core
@@ -104,28 +98,6 @@ importers:
       tsx:
         specifier: 'catalog:'
         version: 4.20.6
-
-  packages/client:
-    dependencies:
-      '@xpert-ai/utils':
-        specifier: workspace:^
-        version: link:../utils
-      '@xpert-ai/xpert-sdk':
-        specifier: workspace:^
-        version: link:../core
-    devDependencies:
-      '@types/node':
-        specifier: ^22.16.3
-        version: 22.18.11
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@22.18.11)(tsx@4.20.6)
 
   packages/core:
     dependencies:
@@ -187,21 +159,6 @@ importers:
       prettier:
         specifier: ^2.8.3
         version: 2.8.8
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@22.18.11)(tsx@4.20.6)
-
-  packages/utils:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.16.3
-        version: 22.18.11
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1

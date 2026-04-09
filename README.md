@@ -58,14 +58,6 @@ pnpm -F basic-example start:kb
 
 Core functionality package providing base services and configuration.
 
-### @xpert-ai/utils
-
-Collection of utility functions for common operations like type checking, formatting, and async operations.
-
-### @xpert-ai/client
-
-Client package that demonstrates how to compose functionality from multiple packages within the monorepo.
-
 ## 🛠️ Development
 
 ### Commands
