@@ -105,9 +105,11 @@ pnpm changeset
 # Bump versions
 pnpm bump-version
 
-# Publish to npm
-pnpm publish --filter @xpert-ai/xpert-sdk --access public --tag latest
+# Publish pending release versions
+pnpm changeset publish
 ```
+
+The GitHub Actions release workflow publishes to npm via trusted publishing (OIDC), so it does not require an `NPM_TOKEN` secret.
 
 ## 🧪 Testing
 
@@ -119,7 +121,7 @@ Run tests:
 
 ```bash
 pnpm test                    # Run all tests
-pnpm test:watch              # Watch mode  
+pnpm test:watch              # Watch mode
 pnpm test:coverage           # With coverage
 pnpm -F @xpert-ai/core test     # Package-specific tests
 ```
@@ -173,10 +175,10 @@ packages/[package-name]/
 ## 🔄 Workflow
 
 1. **Development**: Use `pnpm dev` for watch mode development
-2. **Testing**: Write tests in `[package]/tests/` directories  
+2. **Testing**: Write tests in `[package]/tests/` directories
 3. **Building**: Run `pnpm build` to compile all packages
 4. **Versioning**: Use `pnpm changeset` to document changes
-5. **Publishing**: Run `pnpm ci:publish` to publish packages
+5. **Publishing**: Merge the release PR and let GitHub Actions publish via npm trusted publishing
 
 ## 🤝 Contributing
 
