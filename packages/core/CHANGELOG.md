@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.4
+
+### Patch Changes
+
+- ab00402: update for xpert 3.9.0
+- 85c15db: new chatRequest type
+
 ## 1.0.0
 
 ### Major Changes
