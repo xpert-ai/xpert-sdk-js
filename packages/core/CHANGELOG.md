@@ -6,6 +6,12 @@
 
 - Add the `follow_up` chat run input type.
 
+## 0.0.6
+
+### Patch Changes
+
+- ece7bf9: Add assistant runtime capabilities API and request payload types.
+
 ## 0.0.5
 
 ### Patch Changes
