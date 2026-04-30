@@ -30,6 +30,8 @@ export type {
   ChatMessage,
   ChatMessageFeedback,
   ChatMessageFeedbackRating,
+  ChatFollowUpMode,
+  ChatFollowUpRequest,
   ChatRequest,
   ChatRequestHuman,
   ChatResumeDecision,

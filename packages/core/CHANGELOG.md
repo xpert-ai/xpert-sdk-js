@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.7
+
+### Patch Changes
+
+- Add the `follow_up` chat run input type.
+
 ## 0.0.5
 
 ### Patch Changes

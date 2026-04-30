@@ -587,6 +587,8 @@ export interface ChatInterruptPatch {
   update?: unknown;
 }
 
+export type ChatFollowUpMode = 'queue' | 'steer';
+
 /**
  * Send a new message in a chat run.
  */
@@ -628,10 +630,29 @@ export interface ChatRetryRequest {
 }
 
 /**
+ * Follow up while another chat run is active.
+ */
+export interface ChatFollowUpRequest {
+  action: 'follow_up';
+  conversationId: string;
+  mode: ChatFollowUpMode;
+  message: {
+    clientMessageId?: string;
+    input: ChatRequestHuman;
+  };
+  target?: ChatTarget;
+  state?: ChatState;
+}
+
+/**
  * Discriminated union of all chat request actions.
  * Maps to the server-side `TChatRequest` (v2) validated by `RunCreateStreamHandler`.
  */
-export type ChatRequest = ChatSendRequest | ChatResumeRequest | ChatRetryRequest;
+export type ChatRequest =
+  | ChatSendRequest
+  | ChatResumeRequest
+  | ChatRetryRequest
+  | ChatFollowUpRequest;
 
 /**
  * Legacy chat request format (v1).
