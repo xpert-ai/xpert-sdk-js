@@ -518,7 +518,29 @@ export type RuntimeCapabilitySkill = {
   description?: string;
   repositoryName?: string;
   provider?: string;
+  meta?: RuntimeCapabilitySkillMeta;
   default?: boolean;
+};
+
+export type IconDefinition = {
+  type: "image" | "svg" | "font" | "emoji" | "lottie";
+  value: string;
+  color?: string;
+  size?: number;
+  alt?: string;
+  style?: Record<string, string>;
+};
+
+export type RuntimeCapabilityIcon = IconDefinition;
+
+export type RuntimeCapabilitySkillMeta = {
+  icon?: IconDefinition;
+  [key: string]: unknown;
+};
+
+export type RuntimeCapabilityPluginMeta = {
+  icon?: IconDefinition;
+  [key: string]: unknown;
 };
 
 export type RuntimeCapabilityPlugin = {
@@ -526,6 +548,7 @@ export type RuntimeCapabilityPlugin = {
   provider: string;
   label: string;
   description?: string;
+  meta?: RuntimeCapabilityPluginMeta;
   toolNames?: string[];
 };
 

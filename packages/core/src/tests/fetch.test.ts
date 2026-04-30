@@ -84,6 +84,12 @@ describe.each([["global"], ["mocked"]])(
               id: "skill-default",
               workspaceId: "workspace-1",
               label: "Default Skill",
+              meta: {
+                icon: {
+                  type: "svg",
+                  value: '<svg viewBox="0 0 16 16" />',
+                },
+              },
               default: true,
             },
           ],
@@ -92,6 +98,12 @@ describe.each([["global"], ["mocked"]])(
               nodeKey: "middleware-1",
               provider: "sandbox",
               label: "Sandbox",
+              meta: {
+                icon: {
+                  type: "svg",
+                  value: '<svg viewBox="0 0 16 16" />',
+                },
+              },
               toolNames: ["run_command"],
             },
           ],
