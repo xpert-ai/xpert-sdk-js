@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.8
+
+### Patch Changes
+
+- fd15018: chat follow up types
+
 ## 0.0.7
 
 ### Patch Changes
