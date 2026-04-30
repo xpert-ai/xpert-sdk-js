@@ -75,6 +75,70 @@ describe.each([["global"], ["mocked"]])(
       });
     });
 
+    describe("assistants runtime capabilities", () => {
+      it("should fetch runtime capabilities with the expected path and signal", async () => {
+        const controller = new AbortController();
+        const payload = {
+          skills: [
+            {
+              id: "skill-default",
+              workspaceId: "workspace-1",
+              label: "Default Skill",
+              default: true,
+            },
+          ],
+          plugins: [
+            {
+              nodeKey: "middleware-1",
+              provider: "sandbox",
+              label: "Sandbox",
+              toolNames: ["run_command"],
+            },
+          ],
+        };
+
+        expectedFetchMock.mockImplementationOnce(async (url, init) => {
+          expect(url).toBeInstanceOf(URL);
+          expect((url as URL).pathname).toBe(
+            "/assistants/assistant-1/runtime-capabilities"
+          );
+          expect(init?.signal).toBe(controller.signal);
+
+          return {
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(payload),
+            text: () => Promise.resolve(JSON.stringify(payload)),
+            headers: new Headers({}),
+          } as Response;
+        });
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await expect(
+          client.assistants.getRuntimeCapabilities("assistant-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toEqual(payload);
+      });
+
+      it("should reject 404 responses with a status field", async () => {
+        expectedFetchMock.mockImplementationOnce(async () => {
+          return {
+            ok: false,
+            status: 404,
+            statusText: "Not Found",
+            text: () => Promise.resolve("not found"),
+            headers: new Headers({}),
+          } as Response;
+        });
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await expect(
+          client.assistants.getRuntimeCapabilities("assistant-1")
+        ).rejects.toMatchObject({ status: 404 });
+      });
+    });
+
     describe("header coalescing", () => {
       it("should properly merge headers with conflicting name casing", async () => {
         const client = new Client({ apiKey: "test-api-key" });

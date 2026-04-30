@@ -511,12 +511,47 @@ export type TCopilotModelOptions = {
 
 // Chat request types
 
+export type RuntimeCapabilitySkill = {
+  id: string;
+  workspaceId: string;
+  label: string;
+  description?: string;
+  repositoryName?: string;
+  provider?: string;
+  default?: boolean;
+};
+
+export type RuntimeCapabilityPlugin = {
+  nodeKey: string;
+  provider: string;
+  label: string;
+  description?: string;
+  toolNames?: string[];
+};
+
+export type RuntimeCapabilitiesResponse = {
+  skills: RuntimeCapabilitySkill[];
+  plugins: RuntimeCapabilityPlugin[];
+};
+
+export type RuntimeCapabilitiesSelection = {
+  mode: "allowlist";
+  skills: {
+    workspaceId?: string;
+    ids: string[];
+  };
+  plugins: {
+    nodeKeys: string[];
+  };
+};
+
 /**
  * Human input payload for a chat request.
  */
 export interface ChatRequestHuman {
   input?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
+  runtimeCapabilities?: RuntimeCapabilitiesSelection;
   [key: string]: unknown;
 }
 

@@ -34,6 +34,7 @@ import {
   ChatMessage,
   ChatMessageFeedback,
   Pagination,
+  RuntimeCapabilitiesResponse,
 } from "./schema.js";
 import type {
   Command,
@@ -507,6 +508,25 @@ export class AssistantsClient extends BaseClient {
    */
   async getSchemas(assistantId: string): Promise<GraphSchema> {
     return this.fetch<GraphSchema>(`/assistants/${assistantId}/schemas`);
+  }
+
+  /**
+   * Get runtime-selectable skills and plugin middlewares for an assistant.
+   *
+   * @param assistantId The ID of the assistant.
+   * @param options.signal Optional abort signal.
+   * @returns Runtime capabilities available to the assistant.
+   */
+  async getRuntimeCapabilities(
+    assistantId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<RuntimeCapabilitiesResponse> {
+    return this.fetch<RuntimeCapabilitiesResponse>(
+      `/assistants/${assistantId}/runtime-capabilities`,
+      {
+        signal: options?.signal,
+      }
+    );
   }
 
   /**
