@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.9
+
+### Patch Changes
+
+- de6f4b2: meta of skill & middleware
+
 ## 0.0.8
 
 ### Patch Changes
