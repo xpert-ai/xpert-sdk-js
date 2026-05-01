@@ -51,6 +51,7 @@ export type {
   RuntimeCapabilityPluginMeta,
   RuntimeCapabilitySkill,
   RuntimeCapabilitySkillMeta,
+  RuntimeCapabilitySubAgent,
   Pagination,
   ThreadTask,
   StorageFile,

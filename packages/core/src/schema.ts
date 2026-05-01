@@ -552,9 +552,25 @@ export type RuntimeCapabilityPlugin = {
   toolNames?: string[];
 };
 
+export type RuntimeCapabilitySubAgent = {
+  nodeKey: string;
+  type: "agent" | "xpert";
+  label: string;
+  name?: string;
+  description?: string;
+  avatar?: Record<string, unknown> | string;
+  agentKey?: string;
+  xpertId?: string;
+  parameters?: unknown[];
+  toolNames?: string[];
+  toolsetNames?: string[];
+  knowledgebaseNames?: string[];
+};
+
 export type RuntimeCapabilitiesResponse = {
   skills: RuntimeCapabilitySkill[];
   plugins: RuntimeCapabilityPlugin[];
+  subAgents?: RuntimeCapabilitySubAgent[];
 };
 
 export type RuntimeCapabilitiesSelection = {
@@ -564,6 +580,9 @@ export type RuntimeCapabilitiesSelection = {
     ids: string[];
   };
   plugins: {
+    nodeKeys: string[];
+  };
+  subAgents?: {
     nodeKeys: string[];
   };
 };

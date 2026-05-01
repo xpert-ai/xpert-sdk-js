@@ -107,6 +107,18 @@ describe.each([["global"], ["mocked"]])(
               toolNames: ["run_command"],
             },
           ],
+          subAgents: [
+            {
+              nodeKey: "researcher",
+              type: "agent",
+              label: "Researcher",
+              name: "researcher",
+              description: "Research helper",
+              toolNames: ["search"],
+              toolsetNames: ["Search Tools"],
+              knowledgebaseNames: ["Docs"],
+            },
+          ],
         };
 
         expectedFetchMock.mockImplementationOnce(async (url, init) => {
