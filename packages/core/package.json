@@ -1,6 +1,6 @@
 {
   "name": "@xpert-ai/xpert-sdk",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "SDK Core functionality package",
   "type": "module",
   "main": "dist/index.js",

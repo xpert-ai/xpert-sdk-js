@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.10
+
+### Patch Changes
+
+- b39d399: Add sub-agent runtime capability response and selection types.
+
 ## 0.0.9
 
 ### Patch Changes
