@@ -35,6 +35,10 @@ import {
   ChatMessageFeedback,
   Pagination,
   RuntimeCapabilitiesResponse,
+  SandboxManagedService,
+  SandboxManagedServiceLogs,
+  SandboxManagedServicePreviewSession,
+  SandboxManagedServiceStartInput,
 } from "./schema.js";
 import type {
   Command,
@@ -170,6 +174,17 @@ function getRunMetadataFromResponse(
     run_id: match.groups.run_id,
     thread_id: match.groups.thread_id || undefined,
   };
+}
+
+function deriveSandboxApiUrl(apiUrl: string | undefined): string | undefined {
+  if (!apiUrl) return undefined;
+
+  const normalized = apiUrl.replace(/\/+$/, "");
+  if (normalized.endsWith("/api/ai")) {
+    return `${normalized.slice(0, -"/api/ai".length)}/api/sandbox`;
+  }
+
+  return normalized;
 }
 
 export type RequestHook = (
@@ -1874,6 +1889,11 @@ export class Client<
   public conversations: ConversationsClient;
 
   /**
+   * The client for interacting with sandbox runtime resources.
+   */
+  public sandbox: SandboxClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1911,6 +1931,7 @@ export class Client<
     this.contexts = new ContextsClient(config);
     this.knowledges = new KnowledgesClient(config);
     this.conversations = new ConversationsClient(config);
+    this.sandbox = new SandboxClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -1972,6 +1993,252 @@ export class KnowledgesClient extends BaseClient {
       method: "POST",
       json: payload,
     });
+  }
+}
+
+type SandboxServiceRequestOptions = {
+  organizationId?: string;
+  signal?: AbortSignal;
+};
+
+type SandboxServiceLogsOptions = SandboxServiceRequestOptions & {
+  tail?: number;
+};
+
+function encodeSandboxPathSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function normalizeSandboxProxyPath(path?: string): string {
+  if (!path || path === "/") return "/";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+export class SandboxClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveSandboxApiUrl(config?.apiUrl),
+    });
+  }
+
+  async listConversationServices(
+    conversationId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService[]> {
+    return this.fetch<SandboxManagedService[]>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services`,
+      {
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async listThreadServices(
+    threadId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService[]> {
+    return this.fetch<SandboxManagedService[]>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services`,
+      {
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async getConversationService(
+    conversationId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}`,
+      {
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async getThreadService(
+    threadId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}`,
+      {
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async startConversationService(
+    conversationId: string,
+    input: SandboxManagedServiceStartInput,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/start`,
+      {
+        method: "POST",
+        json: input,
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async startThreadService(
+    threadId: string,
+    input: SandboxManagedServiceStartInput,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/start`,
+      {
+        method: "POST",
+        json: input,
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async getConversationServiceLogs(
+    conversationId: string,
+    serviceId: string,
+    options?: SandboxServiceLogsOptions
+  ): Promise<SandboxManagedServiceLogs> {
+    return this.fetch<SandboxManagedServiceLogs>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/logs`,
+      {
+        params: {
+          organizationId: options?.organizationId,
+          tail: options?.tail,
+        },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async getThreadServiceLogs(
+    threadId: string,
+    serviceId: string,
+    options?: SandboxServiceLogsOptions
+  ): Promise<SandboxManagedServiceLogs> {
+    return this.fetch<SandboxManagedServiceLogs>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/logs`,
+      {
+        params: {
+          organizationId: options?.organizationId,
+          tail: options?.tail,
+        },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async stopConversationService(
+    conversationId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/stop`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async stopThreadService(
+    threadId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/stop`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async restartConversationService(
+    conversationId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/restart`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async restartThreadService(
+    threadId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedService> {
+    return this.fetch<SandboxManagedService>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/restart`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async createConversationServicePreviewSession(
+    conversationId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedServicePreviewSession> {
+    return this.fetch<SandboxManagedServicePreviewSession>(
+      `/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/preview-session`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async createThreadServicePreviewSession(
+    threadId: string,
+    serviceId: string,
+    options?: SandboxServiceRequestOptions
+  ): Promise<SandboxManagedServicePreviewSession> {
+    return this.fetch<SandboxManagedServicePreviewSession>(
+      `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/preview-session`,
+      {
+        method: "POST",
+        params: { organizationId: options?.organizationId },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  getConversationServiceProxyUrl(
+    conversationId: string,
+    serviceId: string,
+    path?: string
+  ): string {
+    const normalizedPath = normalizeSandboxProxyPath(path);
+    return `${this.apiUrl}/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/proxy${normalizedPath}`;
   }
 }
 

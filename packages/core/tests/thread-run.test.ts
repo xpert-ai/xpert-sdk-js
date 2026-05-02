@@ -31,8 +31,20 @@ function getEnv(): Required<EnvConfig> {
   return { XPERT_API_URL: apiUrl, XPERT_API_KEY: apiKey, XPERT_ASSISTANT_ID: assistantId, XPERT_ORGANIZATION_ID: organizationId };
 }
 
+function hasThreadRunIntegrationEnv(): boolean {
+  const env = process.env as EnvConfig;
+  return Boolean(
+    env.XPERT_API_URL &&
+      env.XPERT_API_KEY &&
+      env.XPERT_ASSISTANT_ID &&
+      env.XPERT_ORGANIZATION_ID
+  );
+}
+
 describe('Thread & Run Client', () => {
-  it('should create a thread and stream a run', async () => {
+  const runWithThreadRunEnv = hasThreadRunIntegrationEnv() ? it : it.skip;
+
+  runWithThreadRunEnv('should create a thread and stream a run', async () => {
     const env = getEnv();
 
     const client = new Client({
@@ -93,7 +105,7 @@ describe('Thread & Run Client', () => {
     }
   }, 120_000);
 
-  it('should create a run and wait for result', async () => {
+  runWithThreadRunEnv('should create a run and wait for result', async () => {
     const env = getEnv();
 
     const client = new Client({
@@ -127,7 +139,7 @@ describe('Thread & Run Client', () => {
     }
   }, 120_000);
 
-  it('should create a run, then get and cancel it', async () => {
+  runWithThreadRunEnv('should create a run, then get and cancel it', async () => {
     const env = getEnv();
 
     const client = new Client({

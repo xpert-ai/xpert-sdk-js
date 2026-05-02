@@ -163,6 +163,326 @@ describe.each([["global"], ["mocked"]])(
       });
     });
 
+    describe("sandbox managed services", () => {
+      it("should derive the sandbox API URL and list thread services", async () => {
+        const controller = new AbortController();
+        const payload = [
+          {
+            id: "service-1",
+            conversationId: "conversation-1",
+            provider: "local-shell-sandbox",
+            name: "web",
+            command: "npm run dev",
+            workingDirectory: "/workspace/project-1",
+            status: "running",
+            transportMode: "http",
+          },
+        ];
+
+        expectedFetchMock.mockImplementationOnce(async (url, init) => {
+          expect(url).toBeInstanceOf(URL);
+          expect((url as URL).origin).toBe("https://xpert.local");
+          expect((url as URL).pathname).toBe(
+            "/api/sandbox/threads/thread-1/services"
+          );
+          expect((url as URL).searchParams.get("organizationId")).toBe(
+            "org-1"
+          );
+          expect(init?.signal).toBe(controller.signal);
+
+          return {
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(payload),
+            text: () => Promise.resolve(JSON.stringify(payload)),
+            headers: new Headers({}),
+          } as Response;
+        });
+
+        const client = new Client({
+          apiUrl: "https://xpert.local/api/ai",
+          apiKey: "test-api-key",
+        });
+
+        await expect(
+          client.sandbox.listThreadServices("thread-1", {
+            organizationId: "org-1",
+            signal: controller.signal,
+          })
+        ).resolves.toEqual(payload);
+      });
+
+      it("should stop a thread service with the expected path", async () => {
+        const payload = {
+          id: "service-1",
+          conversationId: "conversation-1",
+          provider: "local-shell-sandbox",
+          name: "web",
+          command: "npm run dev",
+          workingDirectory: "/workspace/project-1",
+          status: "stopped",
+          transportMode: "http",
+        };
+
+        expectedFetchMock.mockImplementationOnce(async (url, init) => {
+          expect(url).toBeInstanceOf(URL);
+          expect((url as URL).pathname).toBe(
+            "/api/sandbox/threads/thread-1/services/service-1/stop"
+          );
+          expect(init?.method).toBe("POST");
+
+          return {
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(payload),
+            text: () => Promise.resolve(JSON.stringify(payload)),
+            headers: new Headers({}),
+          } as Response;
+        });
+
+        const client = new Client({
+          apiUrl: "https://xpert.local/api/ai/",
+          apiKey: "test-api-key",
+        });
+
+        await expect(
+          client.sandbox.stopThreadService("thread-1", "service-1")
+        ).resolves.toEqual(payload);
+      });
+
+      it("should manage conversation services through the sandbox API", async () => {
+        const servicePayload = {
+          id: "service-1",
+          conversationId: "conversation-1",
+          provider: "local-shell-sandbox",
+          name: "web",
+          command: "npm run dev",
+          workingDirectory: "/workspace/project-1",
+          status: "running",
+          transportMode: "http",
+        };
+        const logsPayload = { stdout: "ready", stderr: "" };
+        const previewPayload = {
+          expiresAt: "2026-05-02T12:00:00.000Z",
+          previewUrl:
+            "/api/sandbox/conversations/conversation-1/services/service-1/proxy/",
+        };
+        const expectations = [
+          {
+            path: "/api/sandbox/conversations/conversation-1/services",
+            method: "GET",
+            payload: [servicePayload],
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/service-1",
+            method: "GET",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/start",
+            method: "POST",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/service-1/logs",
+            method: "GET",
+            payload: logsPayload,
+            tail: "120",
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/service-1/stop",
+            method: "POST",
+            payload: { ...servicePayload, status: "stopped" },
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/service-1/restart",
+            method: "POST",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/conversations/conversation-1/services/service-1/preview-session",
+            method: "POST",
+            payload: previewPayload,
+          },
+        ];
+
+        for (const expectation of expectations) {
+          expectedFetchMock.mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(expectation.path);
+            expect((url as URL).searchParams.get("organizationId")).toBe(
+              "org-1"
+            );
+            if (expectation.tail) {
+              expect((url as URL).searchParams.get("tail")).toBe(
+                expectation.tail
+              );
+            }
+            expect(init?.method ?? "GET").toBe(expectation.method);
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(expectation.payload),
+              text: () => Promise.resolve(JSON.stringify(expectation.payload)),
+              headers: new Headers({}),
+            } as Response;
+          });
+        }
+
+        const client = new Client({
+          apiUrl: "https://xpert.local/api/ai",
+          apiKey: "test-api-key",
+        });
+        const options = { organizationId: "org-1" };
+
+        await expect(
+          client.sandbox.listConversationServices("conversation-1", options)
+        ).resolves.toEqual([servicePayload]);
+        await expect(
+          client.sandbox.getConversationService(
+            "conversation-1",
+            "service-1",
+            options
+          )
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.startConversationService(
+            "conversation-1",
+            {
+              name: "web",
+              command: "npm run dev",
+              port: 4173,
+            },
+            options
+          )
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.getConversationServiceLogs(
+            "conversation-1",
+            "service-1",
+            { ...options, tail: 120 }
+          )
+        ).resolves.toEqual(logsPayload);
+        await expect(
+          client.sandbox.stopConversationService(
+            "conversation-1",
+            "service-1",
+            options
+          )
+        ).resolves.toMatchObject({ status: "stopped" });
+        await expect(
+          client.sandbox.restartConversationService(
+            "conversation-1",
+            "service-1",
+            options
+          )
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.createConversationServicePreviewSession(
+            "conversation-1",
+            "service-1",
+            options
+          )
+        ).resolves.toEqual(previewPayload);
+
+        expect(
+          client.sandbox.getConversationServiceProxyUrl(
+            "conversation-1",
+            "service-1",
+            "index.html"
+          )
+        ).toBe(
+          "https://xpert.local/api/sandbox/conversations/conversation-1/services/service-1/proxy/index.html"
+        );
+      });
+
+      it("should manage thread services through the sandbox API", async () => {
+        const servicePayload = {
+          id: "service-1",
+          conversationId: "conversation-1",
+          provider: "local-shell-sandbox",
+          name: "web",
+          command: "npm run dev",
+          workingDirectory: "/workspace/project-1",
+          status: "running",
+          transportMode: "http",
+        };
+        const logsPayload = { stdout: "ready", stderr: "" };
+        const previewPayload = {
+          expiresAt: "2026-05-02T12:00:00.000Z",
+          previewUrl:
+            "/api/sandbox/conversations/conversation-1/services/service-1/proxy/",
+        };
+        const expectations = [
+          {
+            path: "/api/sandbox/threads/thread-1/services/service-1",
+            method: "GET",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/threads/thread-1/services/start",
+            method: "POST",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/threads/thread-1/services/service-1/logs",
+            method: "GET",
+            payload: logsPayload,
+          },
+          {
+            path: "/api/sandbox/threads/thread-1/services/service-1/restart",
+            method: "POST",
+            payload: servicePayload,
+          },
+          {
+            path: "/api/sandbox/threads/thread-1/services/service-1/preview-session",
+            method: "POST",
+            payload: previewPayload,
+          },
+        ];
+
+        for (const expectation of expectations) {
+          expectedFetchMock.mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(expectation.path);
+            expect(init?.method ?? "GET").toBe(expectation.method);
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(expectation.payload),
+              text: () => Promise.resolve(JSON.stringify(expectation.payload)),
+              headers: new Headers({}),
+            } as Response;
+          });
+        }
+
+        const client = new Client({
+          apiUrl: "https://xpert.local/api/ai",
+          apiKey: "test-api-key",
+        });
+
+        await expect(
+          client.sandbox.getThreadService("thread-1", "service-1")
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.startThreadService("thread-1", {
+            name: "web",
+            command: "npm run dev",
+          })
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.getThreadServiceLogs("thread-1", "service-1")
+        ).resolves.toEqual(logsPayload);
+        await expect(
+          client.sandbox.restartThreadService("thread-1", "service-1")
+        ).resolves.toEqual(servicePayload);
+        await expect(
+          client.sandbox.createThreadServicePreviewSession(
+            "thread-1",
+            "service-1"
+          )
+        ).resolves.toEqual(previewPayload);
+      });
+    });
+
     describe("header coalescing", () => {
       it("should properly merge headers with conflicting name casing", async () => {
         const client = new Client({ apiKey: "test-api-key" });

@@ -727,6 +727,65 @@ export interface LegacyChatRequest {
  */
 export type RunInput = ChatRequest | LegacyChatRequest;
 
+export type SandboxManagedServiceStatus =
+  | "starting"
+  | "running"
+  | "stopping"
+  | "stopped"
+  | "failed"
+  | "lost";
+
+export type SandboxManagedServiceTransportMode = "none" | "http";
+
+export type SandboxManagedServiceEnvEntry = {
+  name: string;
+  value: string;
+};
+
+export type SandboxManagedServiceStartInput = {
+  name: string;
+  command: string;
+  cwd?: string | null;
+  port?: number | null;
+  previewPath?: string | null;
+  readyPattern?: string | null;
+  env?: SandboxManagedServiceEnvEntry[];
+  replaceExisting?: boolean;
+};
+
+export type SandboxManagedServiceLogs = {
+  stderr: string;
+  stdout: string;
+};
+
+export type SandboxManagedServicePreviewSession = {
+  expiresAt: string;
+  previewUrl: string;
+};
+
+export interface SandboxManagedService {
+  id?: string;
+  conversationId: string;
+  provider: string;
+  name: string;
+  command: string;
+  workingDirectory: string;
+  requestedPort?: number | null;
+  actualPort?: number | null;
+  previewPath?: string | null;
+  status: SandboxManagedServiceStatus;
+  runtimeRef?: unknown;
+  transportMode?: SandboxManagedServiceTransportMode | null;
+  ownerExecutionId?: string | null;
+  ownerAgentKey?: string | null;
+  startedAt?: string | null;
+  stoppedAt?: string | null;
+  exitCode?: number | null;
+  signal?: string | null;
+  metadata?: unknown;
+  previewUrl?: string | null;
+}
+
 // Conversation types
 export type Pagination<T> = {
   items: T[];

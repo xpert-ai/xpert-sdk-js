@@ -17,6 +17,11 @@ config({
   path: path.resolve(rootDir, '.env')
 })
 
+function hasConversationIntegrationEnv() {
+  const env = process.env as EnvConfig;
+  return Boolean(env.XPERT_API_URL && env.XPERT_API_KEY && env.XPERT_ID);
+}
+
 describe('Conversations Client', () => {
   const mockConfig: ClientConfig = {}
 
@@ -25,7 +30,9 @@ describe('Conversations Client', () => {
     expect(service).toBeInstanceOf(Client);
   });
 
-  it('should manage conversations, messages, and feedbacks via ConversationsClient', async () => {
+  const runWithConversationEnv = hasConversationIntegrationEnv() ? it : it.skip;
+
+  runWithConversationEnv('should manage conversations, messages, and feedbacks via ConversationsClient', async () => {
     // const env = loadEnvConfig();
     const env = process.env as EnvConfig;
     const apiUrl = process.env.XPERT_API_URL || env.XPERT_API_URL;
