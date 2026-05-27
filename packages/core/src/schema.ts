@@ -567,14 +567,96 @@ export type RuntimeCapabilitySubAgent = {
   knowledgebaseNames?: string[];
 };
 
+export type RuntimeSlashCommandCapability =
+  | {
+      type: "skill";
+      id: string;
+    }
+  | {
+      type: "plugin";
+      id: string;
+    }
+  | {
+      type: "subAgent";
+      id: string;
+    };
+
+export type RuntimeSlashCommandAction =
+  | {
+      type: "insert_text";
+      template: string;
+      runtimeCapabilities?: unknown;
+    }
+  | {
+      type: "insert_invocation";
+      template: string;
+      runtimeCapabilities?: unknown;
+    }
+  | {
+      type: "submit_prompt";
+      template: string;
+      runtimeCapabilities?: unknown;
+    }
+  | {
+      type: "client_action";
+      action: {
+        type: string;
+        payload?: Record<string, unknown>;
+      };
+    }
+  | {
+      type: "select_capability";
+      capability: RuntimeSlashCommandCapability;
+    };
+
+export type RuntimeSlashCommandAvailability = {
+  disabled?: boolean;
+  reason?: string;
+  [key: string]: unknown;
+};
+
+export type RuntimeSlashCommandKind = "command" | "prompt_workflow";
+
+export type RuntimeI18nObject = {
+  en_US?: string;
+  zh_Hans?: string;
+  [locale: string]: string | undefined;
+};
+
+export type RuntimeI18nText = string | RuntimeI18nObject;
+
+export type RuntimePromptWorkflow = {
+  type: "prompt_workflow";
+  name?: string;
+  label?: RuntimeI18nText;
+  description?: RuntimeI18nText;
+  tags?: string[];
+};
+
+export type RuntimeSlashCommand = {
+  name: string;
+  label?: RuntimeI18nText;
+  description?: RuntimeI18nText;
+  icon?: string | IconDefinition | Record<string, unknown>;
+  category?: string;
+  aliases?: string[];
+  argsHint?: string;
+  availability?: RuntimeSlashCommandAvailability;
+  kind?: RuntimeSlashCommandKind;
+  workflow?: RuntimePromptWorkflow;
+  action: RuntimeSlashCommandAction;
+  source?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+};
+
 export type RuntimeCapabilitiesResponse = {
   skills: RuntimeCapabilitySkill[];
   plugins: RuntimeCapabilityPlugin[];
   subAgents?: RuntimeCapabilitySubAgent[];
+  commands?: RuntimeSlashCommand[];
 };
 
-export type RuntimeCapabilitiesSelection = {
-  mode: "allowlist";
+export type RuntimeCapabilitiesSelectionSet = {
   skills: {
     workspaceId?: string;
     ids: string[];
@@ -587,6 +669,11 @@ export type RuntimeCapabilitiesSelection = {
   };
 };
 
+export type RuntimeCapabilitiesSelection = RuntimeCapabilitiesSelectionSet & {
+  mode: "allowlist";
+  recommended?: RuntimeCapabilitiesSelectionSet;
+};
+
 /**
  * Human input payload for a chat request.
  */
@@ -594,6 +681,19 @@ export interface ChatRequestHuman {
   input?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
+  commandSource?: {
+    type: "slash_command";
+    name: string;
+    source: "builtin" | "host" | "runtime";
+    executionType:
+      | "insert_text"
+      | "insert_invocation"
+      | "submit_prompt"
+      | "client_action"
+      | "select_capability";
+    kind?: RuntimeSlashCommandKind;
+    workflow?: RuntimePromptWorkflow;
+  };
   [key: string]: unknown;
 }
 
