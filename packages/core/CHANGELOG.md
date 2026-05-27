@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.11
+
+### Patch Changes
+
+- 68ebf20: Add sandbox managed services APIs for thread-scoped runtime service listing and stopping.
+
 ## 0.0.10
 
 ### Patch Changes
