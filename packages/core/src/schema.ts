@@ -894,6 +894,20 @@ export type Pagination<T> = {
 
 export type ChatConversationStatus = "idle" | "busy" | "interrupted" | "error";
 
+export type ThreadGoalStatus =
+  | "active"
+  | "paused"
+  | "blocked"
+  // Reserved for future usage-quota enforcement. The backend does not emit this status yet.
+  | "usage_limited"
+  | "budget_limited"
+  | "complete";
+
+export type ThreadGoalUserStatus = Extract<
+  ThreadGoalStatus,
+  "active" | "paused"
+>;
+
 export type ChatConversationFrom =
   | "platform"
   | "webapp"
@@ -921,6 +935,31 @@ export interface ChatConversation {
   taskId?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ThreadGoal {
+  id: string;
+  conversationId: string;
+  threadId: string;
+  objective: string;
+  status: ThreadGoalStatus;
+  tokensUsed: number;
+  elapsedSeconds: number;
+  continuationCount: number;
+  statusUpdatedAt?: string | null;
+  completedAt?: string | null;
+  blockedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ThreadGoalSetRequest {
+  objective: string;
+}
+
+export interface ThreadGoalPatchRequest {
+  objective?: string;
+  status?: ThreadGoalUserStatus;
 }
 
 export interface ChatMessage {
