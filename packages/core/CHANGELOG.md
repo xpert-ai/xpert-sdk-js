@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.12
+
+### Patch Changes
+
+- 9e409e0: Add conversation goal management methods and align the ESM package entry with the built output.
+- 8267934: goal client
+
 ## 0.0.11
 
 ### Patch Changes
