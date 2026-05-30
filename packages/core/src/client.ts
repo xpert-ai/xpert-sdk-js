@@ -39,6 +39,9 @@ import {
   SandboxManagedServiceLogs,
   SandboxManagedServicePreviewSession,
   SandboxManagedServiceStartInput,
+  ThreadGoal,
+  ThreadGoalPatchRequest,
+  ThreadGoalSetRequest,
 } from "./schema.js";
 import type {
   Command,
@@ -257,6 +260,7 @@ class BaseClient {
     options?: RequestInit & {
       json?: unknown;
       params?: Record<string, unknown>;
+      emptyResponse?: unknown;
       timeoutMs?: number | null;
       withResponse?: boolean;
     }
@@ -276,6 +280,9 @@ class BaseClient {
 
     if (mutatedOptions.withResponse) {
       delete mutatedOptions.withResponse;
+    }
+    if ("emptyResponse" in mutatedOptions) {
+      delete mutatedOptions.emptyResponse;
     }
 
     let timeoutSignal: AbortSignal | null = null;
@@ -312,6 +319,7 @@ class BaseClient {
     options: RequestInit & {
       json?: unknown;
       params?: Record<string, unknown>;
+      emptyResponse?: unknown;
       timeoutMs?: number | null;
       signal?: AbortSignal;
       withResponse: true;
@@ -323,6 +331,7 @@ class BaseClient {
     options?: RequestInit & {
       json?: unknown;
       params?: Record<string, unknown>;
+      emptyResponse?: unknown;
       timeoutMs?: number | null;
       signal?: AbortSignal;
       withResponse?: false;
@@ -334,6 +343,7 @@ class BaseClient {
     options?: RequestInit & {
       json?: unknown;
       params?: Record<string, unknown>;
+      emptyResponse?: unknown;
       timeoutMs?: number | null;
       signal?: AbortSignal;
       withResponse?: boolean;
@@ -348,11 +358,15 @@ class BaseClient {
 
     const response = await this.asyncCaller.fetch(url, finalInit);
 
-    const body = (() => {
+    const body = (async () => {
       if (response.status === 202 || response.status === 204) {
-        return undefined as T;
+        return options?.emptyResponse as T;
       }
-      return response.json() as Promise<T>;
+      const text = await response.text();
+      if (!text) {
+        return options?.emptyResponse as T;
+      }
+      return JSON.parse(text) as T;
     })();
 
     if (options?.withResponse) {
@@ -2288,6 +2302,86 @@ export class ConversationsClient extends BaseClient {
         search: query?.search,
       },
     });
+  }
+
+  async getGoal(
+    conversationId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ThreadGoal | null> {
+    return this.fetch<ThreadGoal | null>(
+      `/conversations/${conversationId}/goal`,
+      {
+        signal: options?.signal,
+        emptyResponse: null,
+      }
+    );
+  }
+
+  async setGoal(
+    conversationId: string,
+    payload: ThreadGoalSetRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ThreadGoal> {
+    const goal = await this.fetch<ThreadGoal | null>(
+      `/conversations/${conversationId}/goal`,
+      {
+        method: "PUT",
+        json: payload,
+        signal: options?.signal,
+        emptyResponse: null,
+      }
+    );
+    return this.requireGoalWriteResult(conversationId, goal, options);
+  }
+
+  async updateGoal(
+    conversationId: string,
+    payload: ThreadGoalPatchRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ThreadGoal> {
+    const goal = await this.fetch<ThreadGoal | null>(
+      `/conversations/${conversationId}/goal`,
+      {
+        method: "PATCH",
+        json: payload,
+        signal: options?.signal,
+        emptyResponse: null,
+      }
+    );
+    return this.requireGoalWriteResult(conversationId, goal, options);
+  }
+
+  private async requireGoalWriteResult(
+    conversationId: string,
+    goal: ThreadGoal | null,
+    options?: { signal?: AbortSignal }
+  ): Promise<ThreadGoal> {
+    if (goal) {
+      return goal;
+    }
+
+    const loadedGoal = await this.getGoal(conversationId, options);
+    if (loadedGoal) {
+      return loadedGoal;
+    }
+
+    throw new Error(
+      `Conversation goal API returned an empty response for "${conversationId}".`
+    );
+  }
+
+  async clearGoal(
+    conversationId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ThreadGoal | null> {
+    return this.fetch<ThreadGoal | null>(
+      `/conversations/${conversationId}/goal`,
+      {
+        method: "DELETE",
+        signal: options?.signal,
+        emptyResponse: null,
+      }
+    );
   }
 
   async listMessages(

@@ -12,29 +12,24 @@ describe.each([["global"], ["mocked"]])(
     let unexpectedFetchMock: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
+      const defaultPayload = {
+        batch_ingest_config: {
+          use_multipart_endpoint: true,
+        },
+      };
       globalFetchMock = vi.fn(() =>
         Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({
-              batch_ingest_config: {
-                use_multipart_endpoint: true,
-              },
-            }),
-          text: () => Promise.resolve(""),
+          json: () => Promise.resolve(defaultPayload),
+          text: () => Promise.resolve(JSON.stringify(defaultPayload)),
           headers: new Headers({}),
         })
       );
       overriddenFetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({
-              batch_ingest_config: {
-                use_multipart_endpoint: true,
-              },
-            }),
-          text: () => Promise.resolve(""),
+          json: () => Promise.resolve(defaultPayload),
+          text: () => Promise.resolve(JSON.stringify(defaultPayload)),
           headers: new Headers({}),
         })
       );
@@ -160,6 +155,159 @@ describe.each([["global"], ["mocked"]])(
         await expect(
           client.assistants.getRuntimeCapabilities("assistant-1")
         ).rejects.toMatchObject({ status: 404 });
+      });
+    });
+
+    describe("conversation goals", () => {
+      it("should manage conversation goals with the expected paths and signal", async () => {
+        const controller = new AbortController();
+        const goalPayload = {
+          id: "goal-1",
+          conversationId: "conversation-1",
+          threadId: "thread-1",
+          objective: "ship feature",
+          status: "active",
+          tokensUsed: 0,
+          elapsedSeconds: 0,
+          continuationCount: 0,
+        };
+        const expectations = [
+          {
+            path: "/conversations/conversation-1/goal",
+            method: "GET",
+            payload: goalPayload,
+          },
+          {
+            path: "/conversations/conversation-1/goal",
+            method: "PUT",
+            body: { objective: "ship feature" },
+            payload: goalPayload,
+          },
+          {
+            path: "/conversations/conversation-1/goal",
+            method: "PATCH",
+            body: { status: "paused" },
+            payload: { ...goalPayload, status: "paused" },
+          },
+          {
+            path: "/conversations/conversation-1/goal",
+            method: "DELETE",
+            payload: null,
+          },
+        ];
+
+        for (const expectation of expectations) {
+          expectedFetchMock.mockImplementationOnce(async (url, init) => {
+            expect(url).toBeInstanceOf(URL);
+            expect((url as URL).pathname).toBe(expectation.path);
+            expect(init?.method ?? "GET").toBe(expectation.method);
+            expect(init?.signal).toBe(controller.signal);
+            if (expectation.body) {
+              expect(init?.body).toBe(JSON.stringify(expectation.body));
+            }
+
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(expectation.payload),
+              text: () =>
+                Promise.resolve(JSON.stringify(expectation.payload)),
+              headers: new Headers({}),
+            } as Response;
+          });
+        }
+
+        const client = new Client({ apiKey: "test-api-key" });
+
+        await expect(
+          client.conversations.getGoal("conversation-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toEqual(goalPayload);
+        await expect(
+          client.conversations.setGoal(
+            "conversation-1",
+            { objective: "ship feature" },
+            { signal: controller.signal }
+          )
+        ).resolves.toEqual(goalPayload);
+        await expect(
+          client.conversations.updateGoal(
+            "conversation-1",
+            { status: "paused" },
+            { signal: controller.signal }
+          )
+        ).resolves.toMatchObject({ status: "paused" });
+        await expect(
+          client.conversations.clearGoal("conversation-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toBeNull();
+      });
+
+      it("should tolerate empty conversation goal responses", async () => {
+        const goalPayload = {
+          id: "goal-1",
+          conversationId: "conversation-1",
+          threadId: "thread-1",
+          objective: "ship feature",
+          status: "active",
+          tokensUsed: 0,
+          elapsedSeconds: 0,
+          continuationCount: 0,
+        };
+
+        expectedFetchMock
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/conversations/conversation-1/goal"
+            );
+            expect(init?.method ?? "GET").toBe("GET");
+
+            return {
+              ok: true,
+              status: 200,
+              text: () => Promise.resolve(""),
+              headers: new Headers({}),
+            } as Response;
+          })
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/conversations/conversation-1/goal"
+            );
+            expect(init?.method ?? "GET").toBe("PUT");
+
+            return {
+              ok: true,
+              status: 200,
+              text: () => Promise.resolve(""),
+              headers: new Headers({}),
+            } as Response;
+          })
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/conversations/conversation-1/goal"
+            );
+            expect(init?.method ?? "GET").toBe("GET");
+
+            return {
+              ok: true,
+              status: 200,
+              text: () => Promise.resolve(JSON.stringify(goalPayload)),
+              headers: new Headers({}),
+            } as Response;
+          });
+
+        const client = new Client({ apiKey: "test-api-key" });
+
+        await expect(
+          client.conversations.getGoal("conversation-1")
+        ).resolves.toBeNull();
+        await expect(
+          client.conversations.setGoal("conversation-1", {
+            objective: "ship feature",
+          })
+        ).resolves.toEqual(goalPayload);
       });
     });
 
