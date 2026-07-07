@@ -753,5 +753,201 @@ describe.each([["global"], ["mocked"]])(
         );
       });
     });
+
+    describe("workspace connectors", () => {
+      it("should manage workspace connector OAuth with the expected paths and signal", async () => {
+        const controller = new AbortController();
+        const connectorPayload = {
+          id: "connector-1",
+          workspaceId: "workspace-1",
+          provider: "lark",
+          status: "active",
+          appIntegrationId: "integration-1",
+          profile: { openId: "ou_1", name: "Ada" },
+          scopes: ["docs:doc:read"],
+          connectedAt: "2026-07-04T00:00:00.000Z",
+        };
+        const expectations = [
+          {
+            path: "/xpert-workspace/workspace-1/connectors",
+            method: "GET",
+            payload: [connectorPayload],
+          },
+          {
+            path: "/xpert-workspace/workspace-1/connectors/definitions",
+            method: "GET",
+            payload: [
+              {
+                provider: "lark",
+                label: { en_US: "Feishu" },
+                auth: { type: "oauth2" },
+                permissions: [
+                  {
+                    key: "feishu.user_access_token",
+                    identity: "user",
+                    credential: "access_token",
+                    storage: "runtime_only",
+                    required: true,
+                  },
+                  {
+                    key: "feishu.refresh_token",
+                    identity: "user",
+                    credential: "refresh_token",
+                    storage: "platform_vault",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            path: "/xpert-workspace/workspace-1/connectors/select-options",
+            method: "GET",
+            params: { provider: "lark" },
+            payload: [
+              {
+                value: "connector-1",
+                label: "Ada",
+                provider: "lark",
+                status: "active",
+              },
+            ],
+          },
+          {
+            path: "/xpert-workspace/workspace-1/connectors/lark/connect",
+            method: "POST",
+            body: {},
+            payload: {
+              connector: connectorPayload,
+              authorizationUrl: "https://open.feishu.cn/open-apis/authen/v1/authorize",
+              stateExpiresAt: "2026-07-04T00:10:00.000Z",
+            },
+          },
+          {
+            path: "/xpert-workspace/connectors/oauth/callback",
+            method: "POST",
+            body: {
+              state: "state-1",
+              code: "code-1",
+            },
+            payload: connectorPayload,
+          },
+          {
+            path: "/xpert-workspace/workspace-1/connectors/connector-1/authorization-status",
+            method: "GET",
+            payload: {
+              connector: connectorPayload,
+              authorizationUrl: "https://accounts.feishu.cn/page/cli?user_code=abc",
+              stateExpiresAt: "2026-07-04T00:10:00.000Z",
+              pollIntervalSeconds: 5,
+            },
+          },
+          {
+            path: "/xpert-workspace/workspace-1/connectors/connector-1",
+            method: "DELETE",
+            payload: null,
+          },
+        ];
+
+        for (const expectation of expectations) {
+          expectedFetchMock.mockImplementationOnce(async (url, init) => {
+            expect(url).toBeInstanceOf(URL);
+            expect((url as URL).pathname).toBe(expectation.path);
+            expect(init?.method ?? "GET").toBe(expectation.method);
+            expect(init?.signal).toBe(controller.signal);
+
+            if (expectation.params) {
+              for (const [key, value] of Object.entries(expectation.params)) {
+                expect((url as URL).searchParams.get(key)).toBe(value);
+              }
+            }
+
+            if (expectation.body) {
+              expect(init?.body).toBe(JSON.stringify(expectation.body));
+            }
+
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(expectation.payload),
+              text: () => Promise.resolve(JSON.stringify(expectation.payload)),
+              headers: new Headers({}),
+            } as Response;
+          });
+        }
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await expect(
+          client.workspaceConnectors.list("workspace-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toEqual([connectorPayload]);
+        await expect(
+          client.workspaceConnectors.definitions("workspace-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toEqual([
+          {
+            provider: "lark",
+            label: { en_US: "Feishu" },
+            auth: { type: "oauth2" },
+            permissions: [
+              {
+                key: "feishu.user_access_token",
+                identity: "user",
+                credential: "access_token",
+                storage: "runtime_only",
+                required: true,
+              },
+              {
+                key: "feishu.refresh_token",
+                identity: "user",
+                credential: "refresh_token",
+                storage: "platform_vault",
+              },
+            ],
+          },
+        ]);
+        await expect(
+          client.workspaceConnectors.selectOptions("workspace-1", {
+            provider: "lark",
+            signal: controller.signal,
+          })
+        ).resolves.toEqual([
+          {
+            value: "connector-1",
+            label: "Ada",
+            provider: "lark",
+            status: "active",
+          },
+        ]);
+        await expect(
+          client.workspaceConnectors.connect(
+            "workspace-1",
+            "lark",
+            {},
+            { signal: controller.signal }
+          )
+        ).resolves.toMatchObject({ authorizationUrl: expect.any(String) });
+        await expect(
+          client.workspaceConnectors.completeOAuth(
+            {
+              state: "state-1",
+              code: "code-1",
+            },
+            { signal: controller.signal }
+          )
+        ).resolves.toEqual(connectorPayload);
+        await expect(
+          client.workspaceConnectors.pollAuthorization("workspace-1", "connector-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toMatchObject({ connector: connectorPayload, pollIntervalSeconds: 5 });
+        await expect(
+          client.workspaceConnectors.disconnect("workspace-1", "connector-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toBeNull();
+      });
+    });
   }
 );

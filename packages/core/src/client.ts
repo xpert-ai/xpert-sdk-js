@@ -34,11 +34,19 @@ import {
   ChatMessage,
   ChatMessageFeedback,
   Pagination,
+  ConnectorDefinition,
+  ConnectorInstance,
+  ConnectorOAuthCompleteRequest,
+  ConnectorOAuthStatusResponse,
+  ConnectorOAuthStartRequest,
+  ConnectorOAuthStartResponse,
+  ConnectorSelectOption,
   RuntimeCapabilitiesResponse,
   SandboxManagedService,
   SandboxManagedServiceLogs,
   SandboxManagedServicePreviewSession,
   SandboxManagedServiceStartInput,
+  StorageFile,
   ThreadGoal,
   ThreadGoalPatchRequest,
   ThreadGoalSetRequest,
@@ -740,6 +748,94 @@ export class AssistantsClient extends BaseClient {
     return this.fetch<Assistant>(`/assistants/${assistantId}/latest`, {
       method: "POST",
       json: { version },
+    });
+  }
+}
+
+export class WorkspaceConnectorsClient extends BaseClient {
+  async list(
+    workspaceId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorInstance[]> {
+    return this.fetch<ConnectorInstance[]>(`/xpert-workspace/${workspaceId}/connectors`, {
+      signal: options?.signal,
+    });
+  }
+
+  async definitions(
+    workspaceId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorDefinition[]> {
+    return this.fetch<ConnectorDefinition[]>(
+      `/xpert-workspace/${workspaceId}/connectors/definitions`,
+      {
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async selectOptions(
+    workspaceId: string,
+    options: { provider: string; signal?: AbortSignal }
+  ): Promise<ConnectorSelectOption[]> {
+    return this.fetch<ConnectorSelectOption[]>(
+      `/xpert-workspace/${workspaceId}/connectors/select-options`,
+      {
+        params: { provider: options.provider },
+        signal: options.signal,
+      }
+    );
+  }
+
+  async connect(
+    workspaceId: string,
+    provider: string,
+    input: ConnectorOAuthStartRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorOAuthStartResponse> {
+    return this.fetch<ConnectorOAuthStartResponse>(
+      `/xpert-workspace/${workspaceId}/connectors/${provider}/connect`,
+      {
+        method: "POST",
+        json: input,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async completeOAuth(
+    input: ConnectorOAuthCompleteRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorInstance> {
+    return this.fetch<ConnectorInstance>(`/xpert-workspace/connectors/oauth/callback`, {
+      method: "POST",
+      json: input,
+      signal: options?.signal,
+    });
+  }
+
+  async pollAuthorization(
+    workspaceId: string,
+    connectorId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorOAuthStatusResponse> {
+    return this.fetch<ConnectorOAuthStatusResponse>(
+      `/xpert-workspace/${workspaceId}/connectors/${connectorId}/authorization-status`,
+      {
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async disconnect(
+    workspaceId: string,
+    connectorId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<null> {
+    return this.fetch<null>(`/xpert-workspace/${workspaceId}/connectors/${connectorId}`, {
+      method: "DELETE",
+      signal: options?.signal,
+      emptyResponse: null,
     });
   }
 }
@@ -1908,6 +2004,11 @@ export class Client<
   public sandbox: SandboxClient;
 
   /**
+   * The client for interacting with workspace connectors.
+   */
+  public workspaceConnectors: WorkspaceConnectorsClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1946,6 +2047,7 @@ export class Client<
     this.knowledges = new KnowledgesClient(config);
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
+    this.workspaceConnectors = new WorkspaceConnectorsClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -1959,7 +2061,7 @@ export function getClientConfigHash(client: Client): string | undefined {
 
 
 export class ContextsClient extends BaseClient {
-  async uploadFile<TResponse = unknown>(
+  async uploadFile<TResponse = StorageFile>(
     file: Blob | BufferSource | string,
     options?: { filename?: string }
   ): Promise<TResponse> {
