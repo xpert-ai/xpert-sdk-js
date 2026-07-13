@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.14
+
+### Patch Changes
+
+- cd119d1: Export conversation task summary types from the package root.
+
 ## 0.0.13
 
 ### Patch Changes
