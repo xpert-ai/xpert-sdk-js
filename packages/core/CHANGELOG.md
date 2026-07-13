@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.13
+
+### Patch Changes
+
+- e29e935: Add conversation task summary snapshot and section pagination APIs.
+
 ## 0.0.12
 
 ### Patch Changes
