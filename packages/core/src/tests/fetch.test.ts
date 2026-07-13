@@ -311,6 +311,70 @@ describe.each([["global"], ["mocked"]])(
       });
     });
 
+    describe("conversation task summaries", () => {
+      it("fetches the summary snapshot and paginated section", async () => {
+        const snapshot = {
+          version: 1,
+          conversationId: "conversation-1",
+          threadId: "thread-1",
+          task: {},
+          outputs: { items: [], total: 0 },
+          sources: { items: [], total: 0 },
+          agents: { items: [], total: 0 },
+          pending: { items: [], total: 0 },
+          updatedAt: "2026-07-13T00:00:00.000Z",
+        };
+        const page = {
+          section: "outputs",
+          items: [],
+          total: 0,
+          offset: 3,
+          limit: 50,
+        };
+
+        expectedFetchMock
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/conversations/conversation-1/task-summary"
+            );
+            expect(init?.signal).toBeUndefined();
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(snapshot),
+              text: () => Promise.resolve(JSON.stringify(snapshot)),
+              headers: new Headers({}),
+            } as Response;
+          })
+          .mockImplementationOnce(async (url) => {
+            expect((url as URL).pathname).toBe(
+              "/conversations/conversation-1/task-summary/outputs"
+            );
+            expect((url as URL).searchParams.get("offset")).toBe("3");
+            expect((url as URL).searchParams.get("limit")).toBe("50");
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(page),
+              text: () => Promise.resolve(JSON.stringify(page)),
+              headers: new Headers({}),
+            } as Response;
+          });
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await expect(
+          client.conversations.getTaskSummary("conversation-1")
+        ).resolves.toEqual(snapshot);
+        await expect(
+          client.conversations.listTaskSummaryItems(
+            "conversation-1",
+            "outputs",
+            { offset: 3, limit: 50 }
+          )
+        ).resolves.toEqual(page);
+      });
+    });
+
     describe("sandbox managed services", () => {
       it("should derive the sandbox API URL and list thread services", async () => {
         const controller = new AbortController();

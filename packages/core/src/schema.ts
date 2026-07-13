@@ -953,6 +953,153 @@ export interface ThreadGoal {
   updatedAt?: string;
 }
 
+export type ChatTaskSummaryResourceReference =
+  | { type: "message"; messageId: string }
+  | {
+      type: "workspace_file";
+      workspacePath: string;
+      fileAssetId?: string;
+      storageFileId?: string;
+    }
+  | { type: "artifact"; artifactId: string }
+  | { type: "browser"; serviceId?: string; url?: string }
+  | { type: "url"; url: string };
+
+export type ChatTaskSummaryOutput = {
+  id: string;
+  kind:
+    | "file"
+    | "image"
+    | "document"
+    | "spreadsheet"
+    | "presentation"
+    | "site"
+    | "url"
+    | "mcp_app";
+  title: string;
+  description?: string;
+  status?: "pending" | "running" | "success" | "error";
+  resource?: ChatTaskSummaryResourceReference;
+  messageId?: string;
+  updatedAt?: string;
+};
+
+export type ChatTaskSummarySource = {
+  id: string;
+  kind:
+    | "attachment"
+    | "code"
+    | "quote"
+    | "image"
+    | "web_page"
+    | "file_element"
+    | "knowledge"
+    | "skill"
+    | "plugin"
+    | "sub_agent";
+  title: string;
+  description?: string;
+  resource?: ChatTaskSummaryResourceReference;
+  messageId?: string;
+  updatedAt?: string;
+};
+
+export type ChatTaskSummaryPlan = {
+  title: string;
+  excerpt: string;
+  messageId?: string;
+  updatedAt?: string;
+};
+
+export type ChatTaskSummaryTodos = {
+  componentId: string;
+  title?: string;
+  items: Array<{
+    id: string;
+    content: string;
+    status: "pending" | "in_progress" | "completed";
+  }>;
+  messageId?: string;
+  updatedAt?: string;
+};
+
+export type ChatTaskSummaryContribution = {
+  version: 1;
+  plan?: ChatTaskSummaryPlan;
+  todos?: ChatTaskSummaryTodos;
+  outputs?: ChatTaskSummaryOutput[];
+  sources?: ChatTaskSummarySource[];
+};
+
+export type ChatTaskSummaryAgent = {
+  id: string;
+  parentId?: string;
+  level: number;
+  agentKey?: string;
+  title: string;
+  status?:
+    | "running"
+    | "success"
+    | "error"
+    | "pending"
+    | "timeout"
+    | "interrupted";
+  elapsedTime?: number;
+  error?: string;
+  messageId?: string;
+  updatedAt?: string;
+};
+
+export type ChatTaskSummaryPending = {
+  id: string;
+  kind: "approval" | "user_input" | "follow_up";
+  title: string;
+  description?: string;
+  messageId?: string;
+  createdAt?: string;
+};
+
+export type ChatTaskSummarySection =
+  | "outputs"
+  | "sources"
+  | "agents"
+  | "pending";
+
+export type ChatTaskSummarySectionItem =
+  | ChatTaskSummaryOutput
+  | ChatTaskSummarySource
+  | ChatTaskSummaryAgent
+  | ChatTaskSummaryPending;
+
+export type ChatTaskSummaryList<T> = {
+  items: T[];
+  total: number;
+};
+
+export type ChatTaskSummarySnapshot = {
+  version: 1;
+  conversationId: string;
+  threadId: string;
+  task: {
+    goal?: ThreadGoal | null;
+    plan?: ChatTaskSummaryPlan;
+    todos?: ChatTaskSummaryTodos;
+  };
+  outputs: ChatTaskSummaryList<ChatTaskSummaryOutput>;
+  sources: ChatTaskSummaryList<ChatTaskSummarySource>;
+  agents: ChatTaskSummaryList<ChatTaskSummaryAgent>;
+  pending: ChatTaskSummaryList<ChatTaskSummaryPending>;
+  updatedAt: string;
+};
+
+export type ChatTaskSummarySectionPage = {
+  section: ChatTaskSummarySection;
+  items: ChatTaskSummarySectionItem[];
+  total: number;
+  offset: number;
+  limit: number;
+};
+
 export interface ThreadGoalSetRequest {
   objective: string;
 }
@@ -973,6 +1120,7 @@ export interface ChatMessage {
   executionId?: string;
   createdAt?: string;
   updatedAt?: string;
+  taskSummary?: ChatTaskSummaryContribution;
 }
 
 export type ChatMessageFeedbackRating = "like" | "dislike";

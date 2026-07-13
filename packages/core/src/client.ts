@@ -33,6 +33,9 @@ import {
   ChatConversation,
   ChatMessage,
   ChatMessageFeedback,
+  ChatTaskSummarySection,
+  ChatTaskSummarySectionPage,
+  ChatTaskSummarySnapshot,
   Pagination,
   RuntimeCapabilitiesResponse,
   SandboxManagedService,
@@ -2313,6 +2316,33 @@ export class ConversationsClient extends BaseClient {
       {
         signal: options?.signal,
         emptyResponse: null,
+      }
+    );
+  }
+
+  async getTaskSummary(
+    conversationId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ChatTaskSummarySnapshot> {
+    return this.fetch<ChatTaskSummarySnapshot>(
+      `/conversations/${conversationId}/task-summary`,
+      { signal: options?.signal }
+    );
+  }
+
+  async listTaskSummaryItems(
+    conversationId: string,
+    section: ChatTaskSummarySection,
+    query?: { offset?: number; limit?: number; signal?: AbortSignal }
+  ): Promise<ChatTaskSummarySectionPage> {
+    return this.fetch<ChatTaskSummarySectionPage>(
+      `/conversations/${conversationId}/task-summary/${section}`,
+      {
+        params: {
+          offset: query?.offset,
+          limit: query?.limit,
+        },
+        signal: query?.signal,
       }
     );
   }
