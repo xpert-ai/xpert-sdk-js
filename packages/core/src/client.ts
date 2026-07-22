@@ -789,6 +789,10 @@ export class ThreadsClient<
    */
   async create(payload?: {
     /**
+     * Assistant ID to bind to the thread when it is created.
+     */
+    assistantId?: string;
+    /**
      * Metadata for the thread.
      */
     metadata?: Metadata;
@@ -832,6 +836,7 @@ export class ThreadsClient<
     return this.fetch<Thread<TStateType>>(`/threads`, {
       method: "POST",
       json: {
+        assistant_id: payload?.assistantId,
         metadata: {
           ...payload?.metadata,
           graph_id: payload?.graphId,

@@ -52,6 +52,25 @@ describe.each([["global"], ["mocked"]])(
     });
 
     describe("createRuns", () => {
+      it("should bind an assistant when creating a thread", async () => {
+        const client = new Client({ apiKey: "test-api-key" });
+
+        await client.threads.create({
+          assistantId: "assistant-1",
+          threadId: "thread-1",
+        });
+
+        expect(expectedFetchMock).toHaveBeenCalledTimes(1);
+        const requestInit = expectedFetchMock.mock.calls[0]?.[1];
+        if (typeof requestInit?.body !== "string") {
+          throw new Error("Expected the request body to be serialized JSON");
+        }
+        expect(JSON.parse(requestInit.body)).toMatchObject({
+          assistant_id: "assistant-1",
+          thread_id: "thread-1",
+        });
+      });
+
       it("should create an example with the given input and generation", async () => {
         const client = new Client({ apiKey: "test-api-key" });
 
