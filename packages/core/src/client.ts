@@ -65,6 +65,21 @@ import { getEnvironmentVariable } from "./utils/env.js";
 import { mergeSignals } from "./utils/signals.js";
 import { BytesLineDecoder, SSEDecoder } from "./utils/sse.js";
 import { IterableReadableStream } from "./utils/stream.js";
+import type {
+  XpertExtensionViewManifest,
+  XpertViewActionRequest,
+  XpertViewActionResult,
+  XpertViewDataResult,
+  XpertViewFileAccessGrantResult,
+  XpertViewFileAccessRequest,
+  XpertViewFileAccessSessionResult,
+  XpertViewFileActionRequest,
+  XpertViewHostType,
+  XpertViewParameterOptionsQuery,
+  XpertViewParameterOptionsResult,
+  XpertViewQuery,
+  XpertViewRequestOptions,
+} from "./view-extension.js";
 
 type HeaderValue = string | undefined | null;
 
@@ -74,7 +89,6 @@ function* iterateHeaders(
   let iter: Iterable<(HeaderValue | HeaderValue | null[])[]>;
   let shouldClear = false;
 
-  // eslint-disable-next-line no-instanceof/no-instanceof
   if (headers instanceof Headers) {
     const entries: [string, string][] = [];
     headers.forEach((value, name) => {
@@ -188,6 +202,20 @@ function deriveSandboxApiUrl(apiUrl: string | undefined): string | undefined {
   const normalized = apiUrl.replace(/\/+$/, "");
   if (normalized.endsWith("/api/ai")) {
     return `${normalized.slice(0, -"/api/ai".length)}/api/sandbox`;
+  }
+
+  return normalized;
+}
+
+function deriveXpertApiUrl(
+  apiUrl: string | undefined,
+  servicePath: "view-hosts" | "workspace-files"
+): string | undefined {
+  if (!apiUrl) return undefined;
+
+  const normalized = apiUrl.replace(/\/+$/, "");
+  if (normalized.endsWith("/api/ai")) {
+    return `${normalized.slice(0, -"/api/ai".length)}/api/${servicePath}`;
   }
 
   return normalized;
@@ -377,6 +405,21 @@ class BaseClient {
     }
 
     return body;
+  }
+
+  protected async fetchText(
+    path: string,
+    options?: RequestInit & {
+      json?: unknown;
+      params?: Record<string, unknown>;
+      timeoutMs?: number | null;
+      signal?: AbortSignal;
+    }
+  ): Promise<string> {
+    const [url, init] = this.prepareFetchOptions(path, options);
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const response = await this.asyncCaller.fetch(url, finalInit);
+    return response.text();
   }
 }
 
@@ -1112,17 +1155,22 @@ export class ThreadsClient<
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): AsyncGenerator<{ id?: string; event: StreamEvent; data: any }> {
-    let [url, init] = this.prepareFetchOptions(`/threads/${threadId}/stream`, {
-      method: "GET",
-      headers: options?.lastEventId
-        ? { "Last-Event-ID": options.lastEventId }
-        : undefined,
-      params: options?.streamMode
-        ? { stream_mode: options.streamMode }
-        : undefined,
-    });
-
-    if (this.onRequest != null) init = await this.onRequest(url, init);
+    const [url, preparedInit] = this.prepareFetchOptions(
+      `/threads/${threadId}/stream`,
+      {
+        method: "GET",
+        headers: options?.lastEventId
+          ? { "Last-Event-ID": options.lastEventId }
+          : undefined,
+        params: options?.streamMode
+          ? { stream_mode: options.streamMode }
+          : undefined,
+      }
+    );
+    const init =
+      this.onRequest != null
+        ? await this.onRequest(url, preparedInit)
+        : preparedInit;
     const response = await this.asyncCaller.fetch(url, init);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1223,13 +1271,16 @@ export class RunsClient<
     const endpoint =
       threadId == null ? `/runs/stream` : `/threads/${threadId}/runs/stream`;
 
-    let [url, init] = this.prepareFetchOptions(endpoint, {
+    const [url, preparedInit] = this.prepareFetchOptions(endpoint, {
       method: "POST",
       json,
       timeoutMs: null,
       signal: payload?.signal,
     });
-    if (this.onRequest != null) init = await this.onRequest(url, init);
+    const init =
+      this.onRequest != null
+        ? await this.onRequest(url, preparedInit)
+        : preparedInit;
     const response = await this.asyncCaller.fetch(url, init);
 
     const runMetadata = getRunMetadataFromResponse(response);
@@ -1524,12 +1575,11 @@ export class RunsClient<
     const opts =
       typeof options === "object" &&
       options != null &&
-      // eslint-disable-next-line no-instanceof/no-instanceof
       options instanceof AbortSignal
         ? { signal: options }
         : options;
 
-    let [url, init] = this.prepareFetchOptions(
+    const [url, preparedInit] = this.prepareFetchOptions(
       threadId != null
         ? `/threads/${threadId}/runs/${runId}/stream`
         : `/runs/${runId}/stream`,
@@ -1547,7 +1597,10 @@ export class RunsClient<
       }
     );
 
-    if (this.onRequest != null) init = await this.onRequest(url, init);
+    const init =
+      this.onRequest != null
+        ? await this.onRequest(url, preparedInit)
+        : preparedInit;
     const response = await this.asyncCaller.fetch(url, init);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1842,20 +1895,15 @@ class UiClient extends BaseClient {
   async getComponent(assistantId: string, agentName: string): Promise<string> {
     return UiClient.getOrCached(
       `${this.apiUrl}-${assistantId}-${agentName}`,
-      async () => {
-        let [url, init] = this.prepareFetchOptions(`/ui/${assistantId}`, {
+      () =>
+        this.fetchText(`/ui/${assistantId}`, {
           headers: {
             Accept: "text/html",
             "Content-Type": "application/json",
           },
           method: "POST",
           json: { name: agentName },
-        });
-        if (this.onRequest != null) init = await this.onRequest(url, init);
-
-        const response = await this.asyncCaller.fetch(url, init);
-        return response.text();
-      }
+        })
     );
   }
 }
@@ -1911,6 +1959,11 @@ export class Client<
   public sandbox: SandboxClient;
 
   /**
+   * The client for Xpert extension views and their workspace-file grants.
+   */
+  public viewHosts: ViewHostsClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -1949,6 +2002,7 @@ export class Client<
     this.knowledges = new KnowledgesClient(config);
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
+    this.viewHosts = new ViewHostsClient(config);
     this["~ui"] = new UiClient(config);
   }
 }
@@ -2256,6 +2310,307 @@ export class SandboxClient extends BaseClient {
   ): string {
     const normalizedPath = normalizeSandboxProxyPath(path);
     return `${this.apiUrl}/conversations/${encodeSandboxPathSegment(conversationId)}/services/${encodeSandboxPathSegment(serviceId)}/proxy${normalizedPath}`;
+  }
+}
+
+function encodeViewPathSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function createViewQueryParams(query: XpertViewQuery): Record<string, unknown> {
+  return {
+    page: query.page,
+    pageSize: query.pageSize,
+    cursor: query.cursor,
+    search: query.search,
+    sortBy: query.sortBy,
+    sortDirection: query.sortDirection,
+    selectionId: query.selectionId,
+    filters: query.filters?.length ? JSON.stringify(query.filters) : undefined,
+    parameters:
+      query.parameters && Object.keys(query.parameters).length > 0
+        ? JSON.stringify(query.parameters)
+        : undefined,
+  };
+}
+
+function createParameterOptionsParams(
+  query: XpertViewParameterOptionsQuery
+): Record<string, unknown> {
+  return {
+    search: query.search,
+    parameters:
+      query.parameters && Object.keys(query.parameters).length > 0
+        ? JSON.stringify(query.parameters)
+        : undefined,
+  };
+}
+
+function createViewFile(input: XpertViewFileActionRequest): {
+  blob: Blob;
+  fileName: string;
+} {
+  if (typeof Blob === "undefined") {
+    throw new Error(
+      "View file actions require Blob and FormData support in the current environment."
+    );
+  }
+
+  const file = input.file;
+  const blob =
+    file instanceof Blob
+      ? file
+      : ArrayBuffer.isView(file)
+      ? new Blob([
+          new Uint8Array(file.buffer, file.byteOffset, file.byteLength).slice()
+            .buffer,
+        ])
+      : new Blob([file]);
+  const fileName =
+    input.fileName?.trim() ||
+    (typeof File !== "undefined" && file instanceof File
+      ? file.name
+      : "upload.bin");
+  return { blob, fileName };
+}
+
+class WorkspaceViewFilesClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "workspace-files"),
+    });
+  }
+
+  createSession(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFileAccessSessionResult> {
+    return this.fetch<XpertViewFileAccessSessionResult>("/view-sessions", {
+      method: "POST",
+      credentials: "include",
+      json: { hostType, hostId, viewKey },
+      signal: options?.signal,
+    });
+  }
+
+  createGrant(
+    sessionId: string,
+    request: XpertViewFileAccessRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFileAccessGrantResult> {
+    return this.fetch<XpertViewFileAccessGrantResult>(
+      `/view-sessions/${encodeViewPathSegment(sessionId)}/grants`,
+      {
+        method: "POST",
+        json: request,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async revokeSession(
+    sessionId: string,
+    options?: XpertViewRequestOptions
+  ): Promise<void> {
+    await this.fetch<{ success: boolean }>(
+      `/view-sessions/${encodeViewPathSegment(sessionId)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+        signal: options?.signal,
+      }
+    );
+  }
+}
+
+export class ViewHostsClient extends BaseClient {
+  private workspaceFiles: WorkspaceViewFilesClient;
+
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "view-hosts"),
+    });
+    this.workspaceFiles = new WorkspaceViewFilesClient(config);
+  }
+
+  listSlotViews(
+    hostType: XpertViewHostType,
+    hostId: string,
+    slot: string,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertExtensionViewManifest[]> {
+    return this.fetch<XpertExtensionViewManifest[]>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/slots/${encodeViewPathSegment(slot)}/views`,
+      { signal: options?.signal }
+    );
+  }
+
+  getManifest(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertExtensionViewManifest> {
+    return this.fetch<XpertExtensionViewManifest>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(viewKey)}/manifest`,
+      { signal: options?.signal }
+    );
+  }
+
+  getData<TItem = unknown, TSummary = unknown>(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    query: XpertViewQuery = {},
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewDataResult<TItem, TSummary>> {
+    return this.fetch<XpertViewDataResult<TItem, TSummary>>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(viewKey)}/data`,
+      {
+        params: createViewQueryParams(query),
+        signal: options?.signal,
+      }
+    );
+  }
+
+  getRemoteComponentEntry(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    options?: XpertViewRequestOptions
+  ): Promise<string> {
+    return this.fetchText(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(viewKey)}/remote-component/entry`,
+      {
+        headers: { Accept: "text/html" },
+        signal: options?.signal,
+      }
+    );
+  }
+
+  getParameterOptions(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    parameterKey: string,
+    query: XpertViewParameterOptionsQuery = {},
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewParameterOptionsResult> {
+    return this.fetch<XpertViewParameterOptionsResult>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(
+        viewKey
+      )}/parameters/${encodeViewPathSegment(parameterKey)}/options`,
+      {
+        params: createParameterOptionsParams(query),
+        signal: options?.signal,
+      }
+    );
+  }
+
+  executeAction<TData = unknown>(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    actionKey: string,
+    request: XpertViewActionRequest = {},
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewActionResult<TData>> {
+    return this.fetch<XpertViewActionResult<TData>>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(
+        viewKey
+      )}/actions/${encodeViewPathSegment(actionKey)}`,
+      {
+        method: "POST",
+        json: request,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  executeFileAction<TData = unknown>(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    actionKey: string,
+    request: XpertViewFileActionRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewActionResult<TData>> {
+    if (typeof FormData === "undefined") {
+      throw new Error(
+        "View file actions require Blob and FormData support in the current environment."
+      );
+    }
+
+    const { blob, fileName } = createViewFile(request);
+    const formData = new FormData();
+    formData.append("file", blob, fileName);
+    if (request.targetId) {
+      formData.append("targetId", request.targetId);
+    }
+    if (request.input) {
+      formData.append("input", JSON.stringify(request.input));
+    }
+    if (request.parameters && Object.keys(request.parameters).length > 0) {
+      formData.append("parameters", JSON.stringify(request.parameters));
+    }
+
+    return this.fetch<XpertViewActionResult<TData>>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
+        hostId
+      )}/views/${encodeViewPathSegment(
+        viewKey
+      )}/actions/${encodeViewPathSegment(actionKey)}/file`,
+      {
+        method: "POST",
+        body: formData,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  createFileAccessSession(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFileAccessSessionResult> {
+    return this.workspaceFiles.createSession(
+      hostType,
+      hostId,
+      viewKey,
+      options
+    );
+  }
+
+  createFileAccessGrant(
+    sessionId: string,
+    request: XpertViewFileAccessRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFileAccessGrantResult> {
+    return this.workspaceFiles.createGrant(sessionId, request, options);
+  }
+
+  revokeFileAccessSession(
+    sessionId: string,
+    options?: XpertViewRequestOptions
+  ): Promise<void> {
+    return this.workspaceFiles.revokeSession(sessionId, options);
   }
 }
 
