@@ -68,6 +68,7 @@ interface AssistantSearch {
  * @inline
  */
 interface ThreadCreate {
+  assistant_id?: Maybe<string>;
   thread_id?: Maybe<string>;
   metadata?: Maybe<Record<string, unknown>>;
   if_exists?: Maybe<"raise" | "do_nothing">;
