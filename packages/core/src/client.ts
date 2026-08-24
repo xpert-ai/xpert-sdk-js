@@ -80,6 +80,8 @@ import type {
   XpertViewQuery,
   XpertViewRequestOptions,
 } from "./view-extension.js";
+import { McpClient } from "./mcp/index.js";
+import type { McpTransportRequestOptions } from "./mcp/transport.js";
 
 type HeaderValue = string | undefined | null;
 
@@ -219,6 +221,14 @@ function deriveXpertApiUrl(
   }
 
   return normalized;
+}
+
+function deriveMcpApiUrl(apiUrl: string | undefined): string | undefined {
+  if (!apiUrl) return undefined;
+  const normalized = apiUrl.replace(/\/+$/, "");
+  return normalized.endsWith("/api/ai")
+    ? normalized.slice(0, -"/ai".length)
+    : normalized;
 }
 
 export type RequestHook = (
@@ -1969,6 +1979,11 @@ export class Client<
   public viewHosts: ViewHostsClient;
 
   /**
+   * The client for MCP publications and MCP App runtime operations.
+   */
+  public mcp: McpClient;
+
+  /**
    * The client for interacting with the UI.
    * @internal Used by LoadExternalComponent and the API might change in the future.
    */
@@ -2008,7 +2023,18 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.viewHosts = new ViewHostsClient(config);
+    this.mcp = new McpClient(new McpTransportClient(config));
     this["~ui"] = new UiClient(config);
+  }
+}
+
+class McpTransportClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({ ...config, apiUrl: deriveMcpApiUrl(config?.apiUrl) });
+  }
+
+  request<T>(path: string, options?: McpTransportRequestOptions): Promise<T> {
+    return this.fetch<T>(path, options);
   }
 }
 
