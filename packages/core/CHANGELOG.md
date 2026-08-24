@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.16
+
+### Patch Changes
+
+- 4504d63: Add typed MCP publication management and MCP App runtime clients aligned with the host tenant and organization scoped contracts.
+
 ## 0.0.15
 
 ### Patch Changes
