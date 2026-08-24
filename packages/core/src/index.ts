@@ -1,5 +1,7 @@
 export { Client, getApiKey } from "./client.js";
 export type { ClientConfig, RequestHook } from "./client.js";
+export { McpClient, McpAppsClient, McpPublicationsClient } from "./mcp/index.js";
+export type * from "./mcp/types.js";
 
 export type {
   Assistant,
