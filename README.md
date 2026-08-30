@@ -58,6 +58,41 @@ pnpm -F basic-example start:kb
 
 Core functionality package providing base services and configuration.
 
+### Assistant model selection
+
+```ts
+import { Client, type ChatSendRequest } from '@xpert-ai/xpert-sdk';
+
+const client = new Client({
+  apiUrl: 'https://your-xpert-host/api/ai',
+  apiKey: process.env.XPERT_API_KEY,
+});
+
+const assistantId = 'your-assistant-id';
+const catalog = await client.assistants.getModels(assistantId);
+const selectedModel = catalog.models.find((model) => !model.disabled)?.id;
+
+// Persist a cross-thread preference when the current principal supports it.
+if (catalog.preference_persistable && selectedModel) {
+  await client.assistants.setModelPreference(assistantId, selectedModel);
+}
+
+// An explicit run model applies to this run only and does not change preference.
+const input: ChatSendRequest = {
+  action: 'send',
+  message: {
+    input: {
+      input: 'Summarize this document.',
+      model: selectedModel,
+    },
+  },
+};
+await client.runs.create('thread-id', assistantId, { input });
+
+// Restore the Assistant Primary model as the saved preference.
+await client.assistants.setModelPreference(assistantId, null);
+```
+
 ## 🛠️ Development
 
 ### Commands

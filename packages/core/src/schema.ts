@@ -134,6 +134,31 @@ export interface Assistant extends AssistantBase {
   updated_at: string;
 }
 
+/** A runtime-selectable Primary model exposed by an Assistant. */
+export interface AssistantModelAvatar {
+  /** Public URL for the Copilot model provider's small icon. */
+  url?: string;
+
+  /** Provider-defined background color used behind transparent icons. */
+  background?: string;
+}
+
+export interface AssistantModelOption {
+  id: string;
+  label: string;
+  description?: string;
+  avatar?: AssistantModelAvatar;
+  default?: boolean;
+  disabled?: boolean;
+}
+
+/** Runtime model catalog and the current user's saved selection. */
+export interface AssistantModelsResponse {
+  models: AssistantModelOption[];
+  selected_model_id: string | null;
+  preference_persistable: boolean;
+}
+
 export interface AssistantGraph {
   nodes: Array<{
     id: string | number;
@@ -679,6 +704,8 @@ export type RuntimeCapabilitiesSelection = RuntimeCapabilitiesSelectionSet & {
  */
 export interface ChatRequestHuman {
   input?: string;
+  /** Opaque Assistant model id returned by assistants.getModels(). */
+  model?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
   commandSource?: {
@@ -1121,6 +1148,8 @@ export interface ChatMessage {
   createdAt?: string;
   updatedAt?: string;
   taskSummary?: ChatTaskSummaryContribution;
+  /** Assistant model id used for this historical human message. */
+  model?: string;
 }
 
 export type ChatMessageFeedbackRating = "like" | "dislike";

@@ -177,6 +177,83 @@ describe.each([["global"], ["mocked"]])(
       });
     });
 
+    describe("assistant models", () => {
+      it("should get models and persist a preference with the expected contracts", async () => {
+        const controller = new AbortController();
+        const payload = {
+          models: [
+            { id: "mdl_primary", label: "Primary", default: true },
+            { id: "mdl_fast", label: "Fast" },
+          ],
+          selected_model_id: "mdl_primary",
+          preference_persistable: true,
+        };
+
+        expectedFetchMock
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/assistants/assistant-1/models"
+            );
+            expect(init?.method ?? "GET").toBe("GET");
+            expect(init?.signal).toBe(controller.signal);
+            return {
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve(payload),
+              text: () => Promise.resolve(JSON.stringify(payload)),
+              headers: new Headers({}),
+            } as Response;
+          })
+          .mockImplementationOnce(async (url, init) => {
+            expect((url as URL).pathname).toBe(
+              "/assistants/assistant-1/model-preference"
+            );
+            expect(init?.method).toBe("PUT");
+            expect(init?.body).toBe(JSON.stringify({ model_id: "mdl_fast" }));
+            expect(init?.signal).toBe(controller.signal);
+            return {
+              ok: true,
+              status: 200,
+              json: () =>
+                Promise.resolve({ ...payload, selected_model_id: "mdl_fast" }),
+              text: () =>
+                Promise.resolve(
+                  JSON.stringify({ ...payload, selected_model_id: "mdl_fast" })
+                ),
+              headers: new Headers({}),
+            } as Response;
+          });
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await expect(
+          client.assistants.getModels("assistant-1", {
+            signal: controller.signal,
+          })
+        ).resolves.toEqual(payload);
+        await expect(
+          client.assistants.setModelPreference("assistant-1", "mdl_fast", {
+            signal: controller.signal,
+          })
+        ).resolves.toMatchObject({ selected_model_id: "mdl_fast" });
+      });
+
+      it("should send null to restore the Primary model", async () => {
+        expectedFetchMock.mockImplementationOnce(async (_url, init) => {
+          expect(init?.body).toBe(JSON.stringify({ model_id: null }));
+          return {
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+            text: () => Promise.resolve("{}"),
+            headers: new Headers({}),
+          } as Response;
+        });
+
+        const client = new Client({ apiKey: "test-api-key" });
+        await client.assistants.setModelPreference("assistant-1", null);
+      });
+    });
+
     describe("conversation goals", () => {
       it("should manage conversation goals with the expected paths and signal", async () => {
         const controller = new AbortController();

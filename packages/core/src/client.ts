@@ -38,6 +38,7 @@ import {
   ChatTaskSummarySnapshot,
   Pagination,
   RuntimeCapabilitiesResponse,
+  AssistantModelsResponse,
   SandboxManagedService,
   SandboxManagedServiceLogs,
   SandboxManagedServicePreviewSession,
@@ -609,6 +610,33 @@ export class AssistantsClient extends BaseClient {
     return this.fetch<RuntimeCapabilitiesResponse>(
       `/assistants/${assistantId}/runtime-capabilities`,
       {
+        signal: options?.signal,
+      }
+    );
+  }
+
+  /** Get the Primary and user-selectable runtime models for an Assistant. */
+  async getModels(
+    assistantId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<AssistantModelsResponse> {
+    return this.fetch<AssistantModelsResponse>(
+      `/assistants/${assistantId}/models`,
+      { signal: options?.signal }
+    );
+  }
+
+  /** Persist a preferred model, or pass null to restore the Primary model. */
+  async setModelPreference(
+    assistantId: string,
+    modelId: string | null,
+    options?: { signal?: AbortSignal }
+  ): Promise<AssistantModelsResponse> {
+    return this.fetch<AssistantModelsResponse>(
+      `/assistants/${assistantId}/model-preference`,
+      {
+        method: "PUT",
+        json: { model_id: modelId },
         signal: options?.signal,
       }
     );
