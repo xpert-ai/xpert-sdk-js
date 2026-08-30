@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.0.17
+
+### Patch Changes
+
+- 1656ba9: Add Assistant runtime model catalog and preference APIs, provider avatars, model-aware chat input types, and historical message model metadata.
+
 ## 0.0.16
 
 ### Patch Changes
