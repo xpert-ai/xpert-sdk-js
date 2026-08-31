@@ -46,6 +46,22 @@ import {
   ThreadGoal,
   ThreadGoalPatchRequest,
   ThreadGoalSetRequest,
+  XpertProject,
+  XpertProjectListOptions,
+  XpertWorkspaceFile,
+  XpertWorkspaceFileListOptions,
+  XpertWorkspace,
+  XpertWorkspaceDefaultOptions,
+  ConnectorConnectRequest,
+  ConnectorConnectResponse,
+  ConnectorConsentRequest,
+  ConnectorBinding,
+  ConnectorBindingCreateRequest,
+  ConnectorPersonalAccountInstance,
+  ConnectorRuntimeOptionsResponse,
+  ConnectorScope,
+  ConnectorOAuthStatusResponse,
+  ConnectorStrategyDefinition,
 } from "./schema.js";
 import type {
   Command,
@@ -80,6 +96,7 @@ import type {
   XpertViewParameterOptionsResult,
   XpertViewQuery,
   XpertViewRequestOptions,
+  XpertViewRuntimeScopeInput,
 } from "./view-extension.js";
 import { McpClient } from "./mcp/index.js";
 import type { McpTransportRequestOptions } from "./mcp/transport.js";
@@ -212,7 +229,13 @@ function deriveSandboxApiUrl(apiUrl: string | undefined): string | undefined {
 
 function deriveXpertApiUrl(
   apiUrl: string | undefined,
-  servicePath: "view-hosts" | "workspace-files"
+  servicePath:
+    | "connector"
+    | "view-hosts"
+    | "workspace-files"
+    | "xpert"
+    | "xpert-project"
+    | "xpert-workspace"
 ): string | undefined {
   if (!apiUrl) return undefined;
 
@@ -600,16 +623,20 @@ export class AssistantsClient extends BaseClient {
    * Get runtime-selectable skills and plugin middlewares for an assistant.
    *
    * @param assistantId The ID of the assistant.
+   * @param options.projectId Optional Project used to resolve Project-scoped capabilities.
    * @param options.signal Optional abort signal.
    * @returns Runtime capabilities available to the assistant.
    */
   async getRuntimeCapabilities(
     assistantId: string,
-    options?: { signal?: AbortSignal }
+    options?: { projectId?: string; signal?: AbortSignal }
   ): Promise<RuntimeCapabilitiesResponse> {
     return this.fetch<RuntimeCapabilitiesResponse>(
       `/assistants/${assistantId}/runtime-capabilities`,
       {
+        params: options?.projectId
+          ? { projectId: options.projectId }
+          : undefined,
         signal: options?.signal,
       }
     );
@@ -2007,6 +2034,26 @@ export class Client<
   public viewHosts: ViewHostsClient;
 
   /**
+   * The client for projects available to the current Xpert user.
+   */
+  public projects: ProjectsClient;
+
+  /**
+   * The client for Xpert-specific workspace resources.
+   */
+  public xperts: XpertsClient;
+
+  /**
+   * The client for workspaces available to the current Xpert user.
+   */
+  public workspaces: WorkspacesClient;
+
+  /**
+   * The client for scoped Connector definitions and authorizations.
+   */
+  public connectors: ConnectorsClient;
+
+  /**
    * The client for MCP publications and MCP App runtime operations.
    */
   public mcp: McpClient;
@@ -2051,6 +2098,10 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.viewHosts = new ViewHostsClient(config);
+    this.projects = new ProjectsClient(config);
+    this.xperts = new XpertsClient(config);
+    this.workspaces = new WorkspacesClient(config);
+    this.connectors = new ConnectorsClient(config);
     this.mcp = new McpClient(new McpTransportClient(config));
     this["~ui"] = new UiClient(config);
   }
@@ -2064,6 +2115,234 @@ class McpTransportClient extends BaseClient {
   request<T>(path: string, options?: McpTransportRequestOptions): Promise<T> {
     return this.fetch<T>(path, options);
   }
+}
+
+function workspaceFileListParams(options: XpertWorkspaceFileListOptions) {
+  return {
+    path: options.path,
+    deepth: options.depth,
+  };
+}
+
+export class ProjectsClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "xpert-project"),
+    });
+  }
+
+  async list(
+    options: XpertProjectListOptions
+  ): Promise<Pagination<XpertProject>> {
+    return this.fetch<Pagination<XpertProject>>("/available", {
+      params: {
+        xpertId: options.xpertId,
+        status: options.status ?? "active",
+        skip: options.skip ?? 0,
+        take: options.take ?? 100,
+      },
+      signal: options.signal,
+    });
+  }
+
+  async get(
+    projectId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<XpertProject> {
+    return this.fetch<XpertProject>(`/${encodeURIComponent(projectId)}`, {
+      signal: options?.signal,
+    });
+  }
+
+  async listFiles(
+    projectId: string,
+    options: XpertWorkspaceFileListOptions = {}
+  ): Promise<XpertWorkspaceFile[]> {
+    return this.fetch<XpertWorkspaceFile[]>(
+      `/${encodeURIComponent(projectId)}/files`,
+      {
+        params: workspaceFileListParams(options),
+        signal: options.signal,
+      }
+    );
+  }
+}
+
+export class XpertsClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "xpert"),
+    });
+  }
+
+  async listWorkspaceFiles(
+    xpertId: string,
+    options: XpertWorkspaceFileListOptions = {}
+  ): Promise<XpertWorkspaceFile[]> {
+    return this.fetch<XpertWorkspaceFile[]>(
+      `/${encodeURIComponent(xpertId)}/workspace/files`,
+      {
+        params: workspaceFileListParams(options),
+        signal: options.signal,
+      }
+    );
+  }
+}
+
+export class WorkspacesClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "xpert-workspace"),
+    });
+  }
+
+  async getDefault(
+    options: XpertWorkspaceDefaultOptions = {}
+  ): Promise<XpertWorkspace | null> {
+    return this.fetch<XpertWorkspace | null>("/my/default", {
+      params: options.purpose ? { purpose: options.purpose } : undefined,
+      signal: options.signal,
+    });
+  }
+}
+
+export class ConnectorsClient extends BaseClient {
+  constructor(config?: ClientConfig) {
+    super({
+      ...config,
+      apiUrl: deriveXpertApiUrl(config?.apiUrl, "connector"),
+    });
+  }
+
+  async runtimeOptions(
+    xpertId: string,
+    options?: { projectId?: string; signal?: AbortSignal }
+  ): Promise<ConnectorRuntimeOptionsResponse> {
+    return this.fetch<ConnectorRuntimeOptionsResponse>("/runtime-options", {
+      params: {
+        xpertId,
+        projectId: options?.projectId,
+      },
+      signal: options?.signal,
+    });
+  }
+
+  async listBindings(
+    scope: ConnectorScope,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorBinding[]> {
+    return this.fetch<ConnectorBinding[]>("/bindings", {
+      params: connectorScopeParams(scope),
+      signal: options?.signal,
+    });
+  }
+
+  async definitions(
+    scope: ConnectorScope,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorStrategyDefinition[]> {
+    return this.fetch<ConnectorStrategyDefinition[]>("/definitions", {
+      params: connectorScopeParams(scope),
+      signal: options?.signal,
+    });
+  }
+
+  async createBinding(
+    input: ConnectorBindingCreateRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorBinding> {
+    return this.fetch<ConnectorBinding>("/bindings", {
+      method: "POST",
+      json: input,
+      signal: options?.signal,
+    });
+  }
+
+  async deleteBinding(
+    bindingId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<void> {
+    await this.fetch<void>(`/bindings/${encodeURIComponent(bindingId)}`, {
+      method: "DELETE",
+      signal: options?.signal,
+    });
+  }
+
+  async connect(
+    bindingId: string,
+    input: ConnectorConnectRequest,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorConnectResponse> {
+    return this.fetch<ConnectorConnectResponse>(
+      `/bindings/${encodeURIComponent(bindingId)}/connect`,
+      {
+        method: "POST",
+        json: input,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async authorizationStatus(
+    bindingId: string,
+    options?: { xpertId?: string; signal?: AbortSignal }
+  ): Promise<ConnectorOAuthStatusResponse> {
+    return this.fetch<ConnectorOAuthStatusResponse>(
+      `/bindings/${encodeURIComponent(bindingId)}/authorization-status`,
+      {
+        params: options?.xpertId ? { xpertId: options.xpertId } : undefined,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async consent(
+    bindingId: string,
+    input: ConnectorConsentRequest = {},
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorBinding> {
+    return this.fetch<ConnectorBinding>(
+      `/bindings/${encodeURIComponent(bindingId)}/consent`,
+      {
+        method: "POST",
+        json: input,
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async disconnectPersonalAccount(
+    accountId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<void> {
+    await this.fetch<void>(
+      `/personal-accounts/${encodeURIComponent(accountId)}`,
+      {
+        method: "DELETE",
+        signal: options?.signal,
+      }
+    );
+  }
+
+  async listPersonalAccounts(options?: {
+    signal?: AbortSignal;
+  }): Promise<ConnectorPersonalAccountInstance[]> {
+    return this.fetch<ConnectorPersonalAccountInstance[]>(
+      "/personal-accounts",
+      {
+        signal: options?.signal,
+      }
+    );
+  }
+}
+
+function connectorScopeParams(scope: ConnectorScope) {
+  return scope.type === "project"
+    ? { scopeType: scope.type, scopeId: scope.projectId }
+    : { scopeType: scope.type, scopeId: scope.workspaceId };
 }
 
 /**
@@ -2450,7 +2729,8 @@ class WorkspaceViewFilesClient extends BaseClient {
     return this.fetch<XpertViewFileAccessSessionResult>("/view-sessions", {
       method: "POST",
       credentials: "include",
-      json: { hostType, hostId, viewKey },
+      json: { hostType, hostId, viewKey, runtimeScope: options?.runtimeScope },
+      headers: createViewRuntimeHeaders(options?.runtimeScope),
       signal: options?.signal,
     });
   }
@@ -2506,7 +2786,10 @@ export class ViewHostsClient extends BaseClient {
       `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
         hostId
       )}/slots/${encodeViewPathSegment(slot)}/views`,
-      { signal: options?.signal }
+      {
+        signal: options?.signal,
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
+      }
     );
   }
 
@@ -2520,7 +2803,10 @@ export class ViewHostsClient extends BaseClient {
       `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(
         hostId
       )}/views/${encodeViewPathSegment(viewKey)}/manifest`,
-      { signal: options?.signal }
+      {
+        signal: options?.signal,
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
+      }
     );
   }
 
@@ -2537,6 +2823,7 @@ export class ViewHostsClient extends BaseClient {
       )}/views/${encodeViewPathSegment(viewKey)}/data`,
       {
         params: createViewQueryParams(query),
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
         signal: options?.signal,
       }
     );
@@ -2553,7 +2840,10 @@ export class ViewHostsClient extends BaseClient {
         hostId
       )}/views/${encodeViewPathSegment(viewKey)}/remote-component/entry`,
       {
-        headers: { Accept: "text/html" },
+        headers: {
+          Accept: "text/html",
+          ...createViewRuntimeHeaders(options?.runtimeScope),
+        },
         signal: options?.signal,
       }
     );
@@ -2575,6 +2865,7 @@ export class ViewHostsClient extends BaseClient {
       )}/parameters/${encodeViewPathSegment(parameterKey)}/options`,
       {
         params: createParameterOptionsParams(query),
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
         signal: options?.signal,
       }
     );
@@ -2597,6 +2888,7 @@ export class ViewHostsClient extends BaseClient {
       {
         method: "POST",
         json: request,
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
         signal: options?.signal,
       }
     );
@@ -2638,6 +2930,7 @@ export class ViewHostsClient extends BaseClient {
       {
         method: "POST",
         body: formData,
+        headers: createViewRuntimeHeaders(options?.runtimeScope),
         signal: options?.signal,
       }
     );
@@ -2673,6 +2966,17 @@ export class ViewHostsClient extends BaseClient {
   }
 }
 
+function createViewRuntimeHeaders(
+  scope?: XpertViewRuntimeScopeInput
+): Record<string, string> {
+  return {
+    ...(scope?.projectId ? { "x-xpert-view-project-id": scope.projectId } : {}),
+    ...(scope?.conversationId
+      ? { "x-xpert-view-conversation-id": scope.conversationId }
+      : {}),
+  };
+}
+
 // Conversations Client
 export class ConversationsClient extends BaseClient {
   async create(payload: Partial<ChatConversation>): Promise<ChatConversation> {
@@ -2684,6 +2988,19 @@ export class ConversationsClient extends BaseClient {
 
   async get(conversationId: string): Promise<ChatConversation> {
     return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  }
+
+  async listWorkspaceFiles(
+    conversationId: string,
+    options: XpertWorkspaceFileListOptions = {}
+  ): Promise<XpertWorkspaceFile[]> {
+    return this.fetch<XpertWorkspaceFile[]>(
+      `/conversations/${encodeURIComponent(conversationId)}/files`,
+      {
+        params: workspaceFileListParams(options),
+        signal: options.signal,
+      }
+    );
   }
 
   async update(

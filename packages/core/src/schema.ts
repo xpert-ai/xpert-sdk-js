@@ -650,6 +650,272 @@ export type RuntimeI18nObject = {
 
 export type RuntimeI18nText = string | RuntimeI18nObject;
 
+export type XpertProjectStatus = "active" | "deprecated" | "archived";
+
+export type XpertProjectAvailabilityStatus = "active" | "archived" | "all";
+
+export type XpertProject = {
+  id: string;
+  name: string;
+  description?: string;
+  status: XpertProjectStatus;
+  /** @deprecated Projects no longer use a workspace as their collaboration boundary. */
+  workspaceId?: string;
+  avatar?: Record<string, unknown> | string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type XpertProjectListOptions = {
+  /** Only projects containing this Xpert are returned. */
+  xpertId: string;
+  status?: XpertProjectAvailabilityStatus;
+  skip?: number;
+  take?: number;
+  signal?: AbortSignal;
+};
+
+/**
+ * File or directory returned by an Xpert workspace volume listing.
+ * `filePath` is the entry name while `fullPath` is relative to the workspace root.
+ */
+export type XpertWorkspaceFile = {
+  filePath: string;
+  fullPath?: string;
+  directory?: string;
+  fileType?: string;
+  fileUrl?: string;
+  url?: string;
+  mimeType?: string;
+  size?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  hasChildren?: boolean;
+  children?: XpertWorkspaceFile[] | null;
+};
+
+export type XpertWorkspaceFileListOptions = {
+  path?: string;
+  depth?: number;
+  signal?: AbortSignal;
+};
+
+export type XpertWorkspaceStatus = "active" | "deprecated" | "archived";
+
+export type XpertWorkspaceAccessPurpose = "runtime" | "authoring";
+
+export type XpertWorkspace = {
+  id: string;
+  name: string;
+  description?: string;
+  status: XpertWorkspaceStatus;
+  ownerId: string;
+  capabilities?: {
+    canRead: boolean;
+    canRun: boolean;
+    canWrite: boolean;
+    canManage: boolean;
+  };
+  isTenantShared?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type XpertWorkspaceDefaultOptions = {
+  purpose?: XpertWorkspaceAccessPurpose;
+  signal?: AbortSignal;
+};
+
+export type ConnectorStatus =
+  | "pending"
+  | "active"
+  | "expired"
+  | "error"
+  | "disconnected";
+
+export type ConnectorAuthorizationMode = "personal" | "shared";
+
+export type ConnectorScope =
+  | { type: "workspace"; workspaceId: string }
+  | { type: "project"; projectId: string };
+
+export type ConnectorAppCredentialField = {
+  name: string;
+  label: RuntimeI18nText;
+  type?: "text" | "password";
+  required?: boolean;
+  placeholder?: RuntimeI18nText;
+  description?: RuntimeI18nText;
+  secret?: boolean;
+};
+
+export type ConnectorCredentialFormDefinition = {
+  fields?: ConnectorAppCredentialField[];
+  help?: {
+    label: RuntimeI18nText;
+    url: string;
+  };
+  defaultValues?: Record<string, string | number | boolean | null>;
+};
+
+export type ConnectorAuthMethodDefinition =
+  | {
+      id: string;
+      type: "oauth2";
+      label: RuntimeI18nText;
+      appCredentials?: ConnectorCredentialFormDefinition;
+    }
+  | {
+      id: string;
+      type: "api_key";
+      label: RuntimeI18nText;
+      credentials: ConnectorCredentialFormDefinition;
+    };
+
+export type ConnectorDefinitionBase = {
+  provider: string;
+  label: RuntimeI18nText;
+  description?: RuntimeI18nText;
+  icon?: IconDefinition;
+  legacyAuthMethodId?: string;
+  /** Missing values are treated as shared-only for legacy providers. */
+  authorizationModes?: ConnectorAuthorizationMode[];
+};
+
+export type ConnectorStrategyDefinition = ConnectorDefinitionBase &
+  (
+    | {
+        auth: {
+          type: "oauth2";
+          authorizationUrl?: string;
+          tokenUrl?: string;
+          userInfoUrl?: string;
+          scopes?: string[];
+          redirectPath?: string;
+        };
+        appCredentials?: ConnectorCredentialFormDefinition;
+      }
+    | {
+        authMethods: ConnectorAuthMethodDefinition[];
+        auth?: {
+          type: "oauth2";
+          authorizationUrl?: string;
+          tokenUrl?: string;
+          userInfoUrl?: string;
+          scopes?: string[];
+          redirectPath?: string;
+        };
+        appCredentials?: ConnectorCredentialFormDefinition;
+      }
+  );
+
+export type ConnectorProfile = {
+  openId?: string;
+  unionId?: string;
+  userId?: string;
+  name?: string;
+  avatarUrl?: string;
+  email?: string;
+  [key: string]: unknown;
+};
+
+export type ConnectorInstance = {
+  id: string;
+  bindingId?: string;
+  accountId?: string;
+  workspaceId?: string | null;
+  projectId?: string | null;
+  provider: string;
+  authMethodId?: string | null;
+  status: ConnectorStatus;
+  profile?: ConnectorProfile | null;
+  scopes?: string[];
+  expiresAt?: string | null;
+  refreshExpiresAt?: string | null;
+  connectedAt?: string | null;
+  disconnectedAt?: string | null;
+  lastError?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ConnectorBinding = ConnectorInstance & {
+  scopeType: ConnectorScope["type"];
+  scope: ConnectorScope;
+  authorizationMode: ConnectorAuthorizationMode;
+};
+
+export type ConnectorRuntimeOption = {
+  bindingId: string;
+  provider: string;
+  authorizationMode: ConnectorAuthorizationMode;
+  status: ConnectorStatus;
+  granted: boolean;
+  profile?: ConnectorProfile | null;
+  label: RuntimeI18nText;
+  description?: RuntimeI18nText;
+  icon?: IconDefinition;
+  authMethods?: ConnectorAuthMethodDefinition[];
+};
+
+export type ConnectorRuntimeOptions = {
+  scope: ConnectorScope;
+  items: ConnectorRuntimeOption[];
+};
+
+export type ConnectorRuntimeOptionsResponse = ConnectorRuntimeOptions;
+
+export type ConnectorBindingCreateRequest = {
+  scope: ConnectorScope;
+  provider: string;
+  authorizationMode: ConnectorAuthorizationMode;
+};
+
+export type ConnectorPersonalAccountInstance = {
+  id: string;
+  provider: string;
+  status: ConnectorStatus;
+  authMethodId?: string | null;
+  profile?: ConnectorProfile | null;
+  scopes?: string[];
+  expiresAt?: string | null;
+  connectedAt?: string | null;
+  disconnectedAt?: string | null;
+  lastError?: string | null;
+};
+
+/** @deprecated Use ConnectorPersonalAccountInstance. */
+export type PersonalConnectorAccount = ConnectorPersonalAccountInstance;
+
+export type ConnectorConnectRequest = {
+  authMethodId?: string;
+  values?: Record<string, unknown>;
+  xpertId?: string;
+  /** @deprecated Use values instead. */
+  app?: Record<string, unknown>;
+};
+
+export type ConnectorConsentRequest = {
+  xpertId?: string;
+};
+
+export type ConnectorConnectResponse = {
+  status: "active" | "pending";
+  connector: ConnectorInstance;
+  authorizationUrl?: string | null;
+  stateExpiresAt?: string | null;
+  pollIntervalSeconds?: number | null;
+};
+
+export type ConnectorOAuthStatusResponse = {
+  connector: ConnectorInstance;
+  granted?: boolean;
+  authorizationUrl?: string | null;
+  stateExpiresAt?: string | null;
+  pollIntervalSeconds?: number | null;
+  message?: string | null;
+};
+
 export type RuntimePromptWorkflow = {
   type: "prompt_workflow";
   name?: string;
@@ -691,6 +957,9 @@ export type RuntimeCapabilitiesSelectionSet = {
   };
   subAgents?: {
     nodeKeys: string[];
+  };
+  connectors?: {
+    bindingIds: string[];
   };
 };
 
@@ -947,6 +1216,10 @@ export type ChatConversationFrom =
   | "dingtalk"
   | "wecom";
 
+export type ChatConversationOptions = Record<string, unknown> & {
+  runtimeCapabilities?: RuntimeCapabilitiesSelection | null;
+};
+
 export interface ChatConversation {
   id: string;
   threadId: string;
@@ -954,12 +1227,54 @@ export interface ChatConversation {
   status?: ChatConversationStatus;
   from?: ChatConversationFrom;
   fromEndUserId?: string;
-  options?: Record<string, unknown>;
+  options?: ChatConversationOptions;
   error?: string;
   operation?: Record<string, unknown>;
   xpertId?: string;
   projectId?: string;
   taskId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ChatConversationFileStatus =
+  | "uploaded"
+  | "scanning"
+  | "parsing"
+  | "ready"
+  | "partial"
+  | "failed";
+
+export type ChatConversationFilePurpose =
+  | "chat_attachment"
+  | "workspace"
+  | "knowledge";
+
+export type ChatConversationFileParseMode = "auto" | "fast" | "deep" | "none";
+
+/**
+ * Agent-readable file attached to a conversation.
+ */
+export interface ChatConversationFile {
+  id: string;
+  storageFileId?: string;
+  conversationId?: string;
+  threadId?: string;
+  projectId?: string;
+  xpertId?: string;
+  originalName?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  purpose: ChatConversationFilePurpose;
+  parseMode: ChatConversationFileParseMode;
+  status: ChatConversationFileStatus;
+  capabilities?: string[];
+  workspacePath?: string;
+  summary?: string;
+  error?: string;
+  parsedAt?: string;
+  failedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }
