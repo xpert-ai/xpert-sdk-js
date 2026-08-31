@@ -153,6 +153,25 @@ describe("SSEDecoder", () => {
     });
   });
 
+  test("preserves plain-text error data", async () => {
+    const input = createStream([
+      "event: error\n",
+      "data: The request failed.\n",
+      "\n",
+    ]);
+    const decoded = input
+      .pipeThrough(BytesLineDecoder())
+      .pipeThrough(SSEDecoder());
+
+    const results = await gather(decoded);
+    expect(results).toEqual([
+      {
+        event: "error",
+        data: "The request failed.",
+      },
+    ]);
+  });
+
   test("end event without data", async () => {
     const input = createStream(["event: test\n"]);
     const decoded = input

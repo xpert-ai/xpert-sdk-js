@@ -4,6 +4,8 @@ import {
   ASSISTANT_CITATION_OPEN_EVENT,
   ASSISTANT_CONTEXT_SET_COMMAND,
   Client,
+  XPERT_VIEW_CONVERSATION_ID_HEADER,
+  XPERT_VIEW_PROJECT_ID_HEADER,
 } from "../index.js";
 import type {
   XpertExtensionViewManifest,
@@ -306,6 +308,64 @@ describe("ViewHostsClient", () => {
       expect(headers.get("x-api-key")).toBe("api-key-secret");
       expect(headers.get("organization-id")).toBe("organization-1");
     }
+  });
+
+  it("forwards Project and conversation runtime scope to View and file-session requests", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(async () =>
+      jsonResponse({
+        sessionId: "session-1",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      })
+    );
+    const client = new Client({
+      apiUrl: "https://xpert.example/api/ai",
+      callerOptions: { fetch: fetchMock },
+    });
+    const runtimeScope = {
+      projectId: "project-1",
+      conversationId: "conversation-1",
+    };
+
+    await client.viewHosts.executeAction(
+      "agent",
+      "agent-1",
+      "view-1",
+      "refresh",
+      {},
+      { runtimeScope }
+    );
+    await client.viewHosts.executeFileAction(
+      "agent",
+      "agent-1",
+      "view-1",
+      "upload",
+      { file: new Uint8Array([1]), fileName: "report.txt" },
+      { runtimeScope }
+    );
+    await client.viewHosts.createFileAccessSession(
+      "agent",
+      "agent-1",
+      "view-1",
+      { runtimeScope }
+    );
+
+    for (const [, init] of fetchMock.mock.calls) {
+      const headers = new Headers(init?.headers);
+      expect(headers.get(XPERT_VIEW_PROJECT_ID_HEADER)).toBe("project-1");
+      expect(headers.get(XPERT_VIEW_CONVERSATION_ID_HEADER)).toBe(
+        "conversation-1"
+      );
+    }
+
+    const [, sessionInit] = fetchMock.mock.calls[2] ?? [];
+    expect(sessionInit?.body).toBe(
+      JSON.stringify({
+        hostType: "agent",
+        hostId: "agent-1",
+        viewKey: "view-1",
+        runtimeScope,
+      })
+    );
   });
 
   it("converts remote entry HTTP errors through the shared caller", async () => {

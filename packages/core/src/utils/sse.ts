@@ -113,7 +113,7 @@ export function SSEDecoder() {
         const sse = {
           id: lastEventId || undefined,
           event,
-          data: data.length ? decodeArraysToJson(decoder, data) : null,
+          data: data.length ? decodeEventData(decoder, data) : null,
         };
 
         // NOTE: as per the SSE spec, do not reset lastEventId
@@ -152,7 +152,7 @@ export function SSEDecoder() {
         controller.enqueue({
           id: lastEventId || undefined,
           event,
-          data: data.length ? decodeArraysToJson(decoder, data) : null,
+          data: data.length ? decodeEventData(decoder, data) : null,
         });
       }
     },
@@ -170,6 +170,11 @@ function joinArrays(data: ArrayLike<number>[]) {
   return merged;
 }
 
-function decodeArraysToJson(decoder: TextDecoder, data: ArrayLike<number>[]) {
-  return JSON.parse(decoder.decode(joinArrays(data)));
+function decodeEventData(decoder: TextDecoder, data: ArrayLike<number>[]) {
+  const text = decoder.decode(joinArrays(data));
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
 }
