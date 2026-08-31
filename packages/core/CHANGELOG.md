@@ -1,5 +1,15 @@
 # @xpert-ai/xpert-sdk
 
+## 0.1.0
+
+### Minor Changes
+
+- 554b8bf: Add Project and conversation runtime scope to View manifests, actions, uploads, file sessions, and host events so Agent and Project entry points can share one authoritative Project data scope.
+
+### Patch Changes
+
+- 554b8bf: Add Xpert-scoped project discovery, scope-aware Connector bindings, runtime options, personal account and consent clients, Project-aware runtime capabilities, and typed conversation Connector selections. Also add project/Xpert/conversation workspace-file lookup and preserve plain-text SSE error payloads so clients can surface the original server message.
+
 ## 0.0.17
 
 ### Patch Changes
