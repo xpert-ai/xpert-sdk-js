@@ -872,11 +872,11 @@ export class ThreadsClient<
   }
 
   /**
-   * Get latest-run context usage for a agent in thread.
+   * Get the last measured context usage for an agent in a thread.
    *
    * @param threadId ID of the thread.
    * @param options.agentKey Agent key for usage filtering.
-   * @returns Context usage summary for the latest run tree.
+   * @returns Usage and freshness; run_id and updated_at identify the measurement.
    */
   async getContextUsage(
     threadId: string,

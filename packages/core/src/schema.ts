@@ -236,6 +236,8 @@ export interface ThreadContextUsage {
   agent_key: string | null;
   run_id: string | null;
   updated_at: string | null;
+  /** Freshness of the measurement. Optional for older servers. */
+  status?: "current" | "stale" | "unavailable";
   usage: {
     context_tokens: number;
     input_tokens: number;
