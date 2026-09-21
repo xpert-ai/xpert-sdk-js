@@ -656,7 +656,23 @@ export type XpertProjectStatus = "active" | "deprecated" | "archived";
 
 export type XpertProjectAvailabilityStatus = "active" | "archived" | "all";
 
+export type XpertProjectTypeRef = { applicationKey: string; projectTypeKey: string };
+export type XpertProjectTypeSummary = XpertProjectTypeRef & {
+  applicationTitle: RuntimeI18nText;
+  title: RuntimeI18nText;
+  binding: { kind: "project" } | { kind: "entity"; providerKey: string };
+  available: boolean;
+};
+export type XpertProjectTypeCatalog = { items: XpertProjectTypeSummary[]; defaultProjectType?: XpertProjectTypeRef };
+export type XpertProjectEntry =
+  | { kind: "project"; projectId?: string; projectType: XpertProjectTypeRef }
+  | { kind: "assistant"; xpertId: string; slug: string; projectId?: string; viewKey: string; selectionId?: string };
+
 export type XpertProject = {
+  applicationKey?: string | null;
+  projectTypeKey?: string | null;
+  applicationInstallationId?: string | null;
+  projectTypeSnapshot?: Pick<XpertProjectTypeSummary, "applicationTitle" | "title" | "binding"> | null;
   id: string;
   name: string;
   description?: string;
@@ -669,6 +685,10 @@ export type XpertProject = {
 };
 
 export type XpertProjectListOptions = {
+  search?: string;
+  applicationKey?: string;
+  projectTypeKey?: string;
+  unclassified?: boolean;
   /** Only projects containing this Xpert are returned. */
   xpertId: string;
   status?: XpertProjectAvailabilityStatus;

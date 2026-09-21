@@ -57,6 +57,29 @@ describe("ProjectsClient", () => {
     expect(onRequest).toHaveBeenCalledOnce();
   });
 
+  it("filters typed projects on the server and resolves governed app entries", async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ items: [], total: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ items: [] }))
+      .mockResolvedValueOnce(jsonResponse({ kind: "assistant", slug: "operations", xpertId: "assistant", viewKey: "ops__cases" }));
+    const onRequest = vi.fn((_url: URL, init: RequestInit) => ({ ...init, headers: { ...init.headers, "organization-id": "org" } }));
+    const client = new Client({ apiUrl: "https://xpert.example/api/ai", callerOptions: { fetch: fetchMock }, onRequest });
+    const ref = { applicationKey: "@example/automotive:operations", projectTypeKey: "case" };
+    const controller = new AbortController();
+    await client.projects.list({ xpertId: "assistant", ...ref, search: "电机 / 10%", skip: 100, take: 100 });
+    await client.projects.types({ xpertId: "assistant", signal: controller.signal });
+    await client.projects.typeEntry(ref, { projectId: "project", xpertId: "assistant", signal: controller.signal });
+    const urls = fetchMock.mock.calls.map(([url]) => url as URL);
+    expect(urls[0].searchParams.get("applicationKey")).toBe(ref.applicationKey);
+    expect(urls[0].searchParams.get("projectTypeKey")).toBe("case");
+    expect(urls[0].searchParams.get("search")).toBe("电机 / 10%");
+    expect(urls[1].pathname).toBe("/api/xpert-project/types");
+    expect(urls[2].pathname).toBe("/api/xpert-project/type-entry");
+    expect(urls[2].searchParams.get("projectId")).toBe("project");
+    expect(fetchMock.mock.calls[2][1]?.signal).toBe(controller.signal);
+    expect(onRequest).toHaveBeenCalledTimes(3);
+  });
+
   it("gets a project by encoded id", async () => {
     const project: XpertProject = {
       id: "project/1",

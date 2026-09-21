@@ -48,6 +48,9 @@ import {
   ThreadGoalSetRequest,
   XpertProject,
   XpertProjectListOptions,
+  XpertProjectTypeRef,
+  XpertProjectTypeCatalog,
+  XpertProjectEntry,
   XpertWorkspaceFile,
   XpertWorkspaceFileListOptions,
   XpertWorkspace,
@@ -2138,12 +2141,24 @@ export class ProjectsClient extends BaseClient {
     return this.fetch<Pagination<XpertProject>>("/available", {
       params: {
         xpertId: options.xpertId,
+        ...(options.applicationKey ? { applicationKey: options.applicationKey } : {}),
+        ...(options.projectTypeKey ? { projectTypeKey: options.projectTypeKey } : {}),
+        ...(options.search ? { search: options.search } : {}),
+        ...(options.unclassified ? { unclassified: true } : {}),
         status: options.status ?? "active",
         skip: options.skip ?? 0,
         take: options.take ?? 100,
       },
       signal: options.signal,
     });
+  }
+
+  async types(options: { xpertId?: string; signal?: AbortSignal } = {}): Promise<XpertProjectTypeCatalog> {
+    return this.fetch<XpertProjectTypeCatalog>("/types", { params: { xpertId: options.xpertId }, signal: options.signal });
+  }
+
+  async typeEntry(type: XpertProjectTypeRef, options: { projectId?: string; xpertId?: string; signal?: AbortSignal } = {}): Promise<XpertProjectEntry> {
+    return this.fetch<XpertProjectEntry>("/type-entry", { params: { ...type, projectId: options.projectId, xpertId: options.xpertId }, signal: options.signal });
   }
 
   async get(
