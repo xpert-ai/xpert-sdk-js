@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.2.1
+
+### Patch Changes
+
+- 04b9553: Add thread pause, resume, display-pause release, conversation branch listing, and optional copy-before-message options so clients can freeze a run, continue it later, and edit a human message onto a new branch.
+
 ## 0.2.0
 
 ### Minor Changes
