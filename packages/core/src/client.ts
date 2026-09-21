@@ -29,6 +29,8 @@ import {
   ThreadSortBy,
   ThreadState,
   ThreadStatus,
+  ThreadPauseResult,
+  ThreadCopyOptions,
   Knowledgebase,
   ChatConversation,
   ChatMessage,
@@ -862,6 +864,13 @@ export class ThreadsClient<
   TStateType = DefaultValues,
   TUpdateType = TStateType
 > extends BaseClient {
+  /** Reveal completed output after a display pause; does not resume execution. */
+  async releaseDisplayPause(threadId: string, pauseId: string): Promise<void> {
+    return this.fetch(`/threads/${threadId}/display-pause/${encodeURIComponent(pauseId)}`, {
+      method: "DELETE",
+    });
+  }
+
   /**
    * Get a thread by ID.
    *
@@ -971,9 +980,13 @@ export class ThreadsClient<
    * @param threadId ID of the thread to be copied
    * @returns Newly copied thread
    */
-  async copy(threadId: string): Promise<Thread<TStateType>> {
+  async copy(
+    threadId: string,
+    options?: ThreadCopyOptions
+  ): Promise<Thread<TStateType>> {
     return this.fetch<Thread<TStateType>>(`/threads/${threadId}/copy`, {
       method: "POST",
+      ...(options ? { json: options } : {}),
     });
   }
 
@@ -1597,6 +1610,57 @@ export class RunsClient<
         wait: wait ? "1" : "0",
         action,
       },
+    });
+  }
+
+  /** Request a durable pause and return the latest server-side run-control state. */
+  async pause(
+    threadId: string,
+    runId: string,
+    options?: {
+      displaySnapshot?: string;
+      pollIntervalMs?: number;
+      pollTimeoutMs?: number;
+    },
+  ): Promise<ThreadPauseResult> {
+    const requested = await this.fetch<ThreadPauseResult>(`/threads/${threadId}/runs/${runId}/pause`, {
+      method: "POST",
+      ...(options?.displaySnapshot !== undefined
+        ? { json: { displaySnapshot: options.displaySnapshot } }
+        : {}),
+    });
+
+    const pollIntervalMs = Math.max(100, options?.pollIntervalMs ?? 500);
+    const pollTimeoutMs = Math.max(0, options?.pollTimeoutMs ?? 5000);
+    if (requested.state !== "pausing" || pollTimeoutMs === 0) return requested;
+
+    const deadline = Date.now() + pollTimeoutMs;
+    let latest = requested;
+    while (latest.state === "pausing" && Date.now() < deadline) {
+      await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));
+      if (Date.now() >= deadline) break;
+      let thread: Thread<TStateType>;
+      try {
+        thread = await this.fetch<Thread<TStateType>>(`/threads/${threadId}`);
+      } catch {
+        // The pause request is durable; a transient status read must not turn
+        // a successful pause into a client-side error or restart the stream.
+        return latest;
+      }
+      if (thread.runControl?.executionId !== runId || !thread.runControl) return latest;
+      latest = {
+        ...thread.runControl,
+        ...(thread.displayPause ? { displayPause: thread.displayPause } : {}),
+      };
+    }
+    return latest;
+  }
+
+  /** Continue a saved pause as a new execution attempt; join the returned run. */
+  async resume(threadId: string, runId: string, pauseId: string): Promise<Run> {
+    return this.fetch(`/threads/${threadId}/runs/${runId}/resume`, {
+      method: "POST",
+      json: { pauseId },
     });
   }
 
@@ -3003,6 +3067,13 @@ export class ConversationsClient extends BaseClient {
 
   async get(conversationId: string): Promise<ChatConversation> {
     return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  }
+
+  /** List the existing history branches of a conversation. */
+  async listThreads(conversationId: string): Promise<Thread[]> {
+    return this.fetch(
+      `/conversations/${encodeURIComponent(conversationId)}/threads`
+    );
   }
 
   async listWorkspaceFiles(

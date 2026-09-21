@@ -10,7 +10,39 @@ export type RunStatus =
   | "timeout"
   | "interrupted";
 
-export type ThreadStatus = "idle" | "busy" | "interrupted" | "error";
+export type ThreadStatus =
+  | "idle"
+  | "busy"
+  | "pausing"
+  | "paused"
+  | "interrupted"
+  | "error";
+
+/** Client presentation only; never used as workflow state or model input. */
+export type ThreadDisplayPause = {
+  executionId: string;
+  pauseId: string;
+  createdAt: string;
+  /** Versioned JSON presentation snapshot, returned by threads.get only. */
+  snapshot?: string;
+};
+
+export type ThreadPauseResult = ThreadRunControl & { displayPause?: ThreadDisplayPause };
+
+export type ThreadRunControl = {
+  executionId: string;
+  state: "running" | "pausing" | "paused";
+  pauseId?: string;
+  graphRevision?: string;
+  checkpoint?: { threadId: string; checkpointNs: string; checkpointId: string };
+};
+
+export type ThreadCopyOptions = {
+  /** Fork before this human message, preserving the original branch and run. */
+  beforeMessageId: string;
+  /** Stable identity for safely retrying this branch creation. */
+  requestId: string;
+};
 
 type MultitaskStrategy = "reject" | "interrupt" | "rollback" | "enqueue";
 
@@ -223,6 +255,9 @@ export interface Thread<ValuesType = DefaultValues> {
 
   /** The status of the thread */
   status: ThreadStatus;
+  runControl?: ThreadRunControl | null;
+  displayPause?: ThreadDisplayPause | null;
+  operation?: ChatConversation["operation"] | null;
 
   /** The current state of the thread. */
   values: ValuesType;
@@ -1210,7 +1245,7 @@ export type Pagination<T> = {
   total: number;
 };
 
-export type ChatConversationStatus = "idle" | "busy" | "interrupted" | "error";
+export type ChatConversationStatus = ThreadStatus;
 
 export type ThreadGoalStatus =
   | "active"
@@ -1473,6 +1508,13 @@ export interface ThreadGoalPatchRequest {
   status?: ThreadGoalUserStatus;
 }
 
+/** Graph position saved before a human input ran; lets that input be edited into a new branch. */
+export type ChatMessageInputCheckpoint = {
+  version: 1;
+  checkpoint: { threadId: string; checkpointNs: string; checkpointId: string } | null;
+  graphRevision: string;
+};
+
 export interface ChatMessage {
   id: string;
   conversationId?: string;
@@ -1487,6 +1529,8 @@ export interface ChatMessage {
   taskSummary?: ChatTaskSummaryContribution;
   /** Assistant model id used for this historical human message. */
   model?: string;
+  /** `null` means the server has no saved checkpoint for this input, so it cannot be branched. */
+  inputCheckpoint?: ChatMessageInputCheckpoint | null;
 }
 
 export type ChatMessageFeedbackRating = "like" | "dislike";
