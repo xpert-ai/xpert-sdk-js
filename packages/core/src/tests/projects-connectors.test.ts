@@ -273,9 +273,10 @@ describe("ConnectorsClient", () => {
     ).resolves.toEqual(response);
 
     const url = fetchMock.mock.calls[0]?.[0] as URL;
-    expect(url.pathname).toBe("/api/connector/runtime-options");
-    expect(url.searchParams.get("xpertId")).toBe("xpert/1");
+    expect(url.pathname).toBe("/api/ai/assistants/xpert%2F1/connectors");
+    expect(url.searchParams.has("xpertId")).toBe(false);
     expect(url.searchParams.get("projectId")).toBe("project/1");
+    expect(url.searchParams.has("includeWorkspace")).toBe(false);
   });
 
   it("lists definitions and bindings for a typed scope", async () => {
@@ -372,6 +373,7 @@ describe("ConnectorsClient", () => {
       "/api/connector/bindings/binding%2F1/connect"
     );
     expect(connectInit?.method).toBe("POST");
+    expect(connectInit?.credentials).toBe("include");
     expect(connectInit?.body).toBe(JSON.stringify(connectInput));
     expect((fetchMock.mock.calls[1]?.[0] as URL).pathname).toBe(
       "/api/connector/bindings/binding%2F1/authorization-status"

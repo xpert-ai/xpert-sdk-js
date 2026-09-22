@@ -1,4 +1,5 @@
 import type { JSONSchema7 } from "json-schema";
+import type { RuntimeResourcesSelection } from "./runtime-resources.js";
 
 type Optional<T> = T | null | undefined;
 
@@ -830,6 +831,7 @@ export type ConnectorAuthMethodDefinition =
     };
 
 export type ConnectorDefinitionBase = {
+  runtimeUsage?: "middleware" | "credential";
   provider: string;
   label: RuntimeI18nText;
   description?: RuntimeI18nText;
@@ -903,6 +905,11 @@ export type ConnectorBinding = ConnectorInstance & {
 };
 
 export type ConnectorRuntimeOption = {
+  scope?: ConnectorScope;
+  canManage?: boolean;
+  managementUrl?: string;
+
+  runtimeUsage?: "middleware" | "credential";
   bindingId: string;
   provider: string;
   authorizationMode: ConnectorAuthorizationMode;
@@ -916,6 +923,10 @@ export type ConnectorRuntimeOption = {
 };
 
 export type ConnectorRuntimeOptions = {
+  workspaceScope?: ConnectorScope;
+  canManageWorkspace?: boolean;
+  managementUrl?: string;
+
   scope: ConnectorScope;
   items: ConnectorRuntimeOption[];
 };
@@ -971,6 +982,13 @@ export type ConnectorOAuthStatusResponse = {
   stateExpiresAt?: string | null;
   pollIntervalSeconds?: number | null;
   message?: string | null;
+};
+
+/** Read-only Assistant connection readiness; contains no OAuth URLs or account details. */
+export type ConnectorRuntimeStatus = {
+  bindingId: string;
+  status: ConnectorStatus;
+  granted: boolean;
 };
 
 export type RuntimePromptWorkflow = {
@@ -1033,6 +1051,7 @@ export interface ChatRequestHuman {
   /** Opaque Assistant model id returned by assistants.getModels(). */
   model?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
+  runtimeResources?: RuntimeResourcesSelection;
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
   commandSource?: {
     type: "slash_command";
@@ -1274,6 +1293,7 @@ export type ChatConversationFrom =
   | "wecom";
 
 export type ChatConversationOptions = Record<string, unknown> & {
+  runtimeResources?: RuntimeResourcesSelection;
   runtimeCapabilities?: RuntimeCapabilitiesSelection | null;
 };
 

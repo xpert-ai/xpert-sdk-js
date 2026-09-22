@@ -113,6 +113,7 @@ export type {
   ConnectorRuntimeOption,
   ConnectorRuntimeOptions,
   ConnectorRuntimeOptionsResponse,
+  ConnectorRuntimeStatus,
   ConnectorScope,
   ConnectorStatus,
   ConnectorStrategyDefinition,
@@ -269,3 +270,5 @@ export type {
   WorkbenchOpenFileEvidence,
   WorkbenchOpenFileEvidenceBox,
 } from "./view-extension.js";
+
+export type * from "./runtime-resources.js";

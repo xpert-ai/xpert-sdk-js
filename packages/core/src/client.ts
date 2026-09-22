@@ -64,10 +64,17 @@ import {
   ConnectorBindingCreateRequest,
   ConnectorPersonalAccountInstance,
   ConnectorRuntimeOptionsResponse,
+  ConnectorRuntimeStatus,
   ConnectorScope,
   ConnectorOAuthStatusResponse,
   ConnectorStrategyDefinition,
 } from "./schema.js";
+import type {
+  RuntimeResourceAuthorization,
+  RuntimeResourceCatalog,
+  RuntimeResourceKind,
+  RuntimeResourcesSelection,
+} from "./runtime-resources.js";
 import type {
   Command,
   CronsCreatePayload,
@@ -622,6 +629,45 @@ export class AssistantsClient extends BaseClient {
    */
   async getSchemas(assistantId: string): Promise<GraphSchema> {
     return this.fetch<GraphSchema>(`/assistants/${assistantId}/schemas`);
+  }
+
+  /** Validate a complete, version-pinned selection without persisting it. */
+  async validateResources(
+    assistantId: string,
+    selection: RuntimeResourcesSelection,
+    projectId?: string
+  ): Promise<RuntimeResourcesSelection> {
+    return this.fetch(
+      `/assistants/${encodeURIComponent(assistantId)}/resources/validate`,
+      { method: "POST", json: { runtimeResources: selection, projectId } }
+    );
+  }
+
+  /** Resolve the workspace connection required by a selected plugin component. */
+  async authorizeResource(
+    assistantId: string,
+    input: { bindingId: string; version: string; serverName: string; projectId?: string }
+  ): Promise<RuntimeResourceAuthorization> {
+    return this.fetch(
+      `/assistants/${encodeURIComponent(assistantId)}/resources/authorize`,
+      { method: "POST", json: input }
+    );
+  }
+
+  /** Search resources available to an Assistant in the current project context. */
+  async getResources(
+    assistantId: string,
+    options?: {
+      projectId?: string;
+      search?: string;
+      kind?: RuntimeResourceKind;
+      offset?: number;
+      limit?: number;
+      signal?: AbortSignal;
+    }
+  ): Promise<RuntimeResourceCatalog> {
+    const { signal, ...params } = options ?? {};
+    return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources`, { params, signal });
   }
 
   /**
@@ -2288,25 +2334,64 @@ export class WorkspacesClient extends BaseClient {
   }
 }
 
+class ConnectorRuntimeClient extends BaseClient {
+  options(
+    assistantId: string,
+    options?: { projectId?: string; includeWorkspace?: boolean; signal?: AbortSignal }
+  ): Promise<ConnectorRuntimeOptionsResponse> {
+    return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/connectors`, {
+      params: {
+        projectId: options?.projectId,
+        includeWorkspace: options?.includeWorkspace ? "true" : undefined,
+      },
+      signal: options?.signal,
+    });
+  }
+
+  status(
+    assistantId: string,
+    bindingId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorRuntimeStatus> {
+    return this.fetch(
+      `/assistants/${encodeURIComponent(assistantId)}/connectors/${encodeURIComponent(bindingId)}/status`,
+      { signal: options?.signal }
+    );
+  }
+}
+
 export class ConnectorsClient extends BaseClient {
+  private readonly runtimeClient: ConnectorRuntimeClient;
+
   constructor(config?: ClientConfig) {
     super({
       ...config,
       apiUrl: deriveXpertApiUrl(config?.apiUrl, "connector"),
     });
+    const apiUrl = config?.apiUrl?.replace(/\/+$/, "");
+    this.runtimeClient = new ConnectorRuntimeClient({
+      ...config,
+      apiUrl: apiUrl?.endsWith("/api/connector")
+        ? `${apiUrl.slice(0, -"/api/connector".length)}/api/ai`
+        : apiUrl,
+    });
   }
 
+  /** Read Assistant-authorized connections; requires the Assistant Connector API. */
   async runtimeOptions(
     xpertId: string,
-    options?: { projectId?: string; signal?: AbortSignal }
+    options?: { projectId?: string; includeWorkspace?: boolean; signal?: AbortSignal }
   ): Promise<ConnectorRuntimeOptionsResponse> {
-    return this.fetch<ConnectorRuntimeOptionsResponse>("/runtime-options", {
-      params: {
-        xpertId,
-        projectId: options?.projectId,
-      },
-      signal: options?.signal,
-    });
+    return this.runtimeClient.options(xpertId, options);
+  }
+
+  /** Read readiness without starting OAuth or returning account credentials. */
+  async runtimeStatus(
+    assistantId: string,
+    bindingId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ConnectorRuntimeStatus> {
+    return this.runtimeClient.status(assistantId, bindingId, options);
   }
 
   async listBindings(
@@ -2359,6 +2444,7 @@ export class ConnectorsClient extends BaseClient {
       `/bindings/${encodeURIComponent(bindingId)}/connect`,
       {
         method: "POST",
+        credentials: "include",
         json: input,
         signal: options?.signal,
       }
@@ -3058,6 +3144,22 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** Read the persisted resource versions and current concurrency revision. */
+  async getRuntimeResources(id: string): Promise<RuntimeResourcesSelection> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/runtime-resources`);
+  }
+
+  /** Replace the full selection; stale revisions fail with HTTP 409. */
+  async updateRuntimeResources(
+    id: string,
+    selection: RuntimeResourcesSelection
+  ): Promise<RuntimeResourcesSelection> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/runtime-resources`, {
+      method: "PUT",
+      json: selection,
+    });
+  }
+
   async create(payload: Partial<ChatConversation>): Promise<ChatConversation> {
     return this.fetch<ChatConversation>(`/conversations`, {
       method: "POST",
