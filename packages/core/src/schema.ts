@@ -1508,6 +1508,32 @@ export interface ThreadGoalPatchRequest {
   status?: ThreadGoalUserStatus;
 }
 
+/** Execution identity and presentation metadata; unknown legacy calls remain unclassified. */
+export interface ChatAgentRunSummary {
+  id: string;
+  parentId?: string;
+  type?: string;
+  category?: string;
+  agentKey?: string;
+  xpertId?: string;
+  xpertName?: string;
+  avatar?: {
+    url?: string;
+    background?: string;
+    emoji?: { id?: string; colons?: string; unified?: string };
+    useNotoColor?: boolean;
+  };
+  title?: string;
+  invocationKind?: "external_assistant" | "sub_agent";
+  model?: string;
+  status?: string;
+  elapsedTime?: number;
+  inputs?: unknown;
+  error?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** Graph position saved before a human input ran; lets that input be edited into a new branch. */
 export type ChatMessageInputCheckpoint = {
   version: 1;
@@ -1527,6 +1553,7 @@ export interface ChatMessage {
   createdAt?: string;
   updatedAt?: string;
   taskSummary?: ChatTaskSummaryContribution;
+  agentRuns?: ChatAgentRunSummary[];
   /** Assistant model id used for this historical human message. */
   model?: string;
   /** `null` means the server has no saved checkpoint for this input, so it cannot be branched. */

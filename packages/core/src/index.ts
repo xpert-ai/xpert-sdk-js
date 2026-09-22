@@ -54,6 +54,7 @@ export type {
   ChatConversationOptions,
   ChatConversationStatus,
   ChatMessage,
+  ChatAgentRunSummary,
   ChatMessageInputCheckpoint,
   ChatMessageFeedback,
   ChatMessageFeedbackRating,
