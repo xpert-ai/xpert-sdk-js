@@ -3222,9 +3222,10 @@ export class ConversationsClient extends BaseClient {
     limit?: number;
     offset?: number;
     search?: string;
-  }): Promise<Pagination<ChatConversation>> {
+  }, options?: { signal?: AbortSignal }): Promise<Pagination<ChatConversation>> {
     return this.fetch<Pagination<ChatConversation>>(`/conversations/search`, {
       method: "POST",
+      signal: options?.signal,
       json: {
         where: query?.where,
         order: query?.order,
