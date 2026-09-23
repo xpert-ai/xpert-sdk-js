@@ -1555,6 +1555,8 @@ export interface ThreadGoalPatchRequest {
 
 /** Execution identity and presentation metadata; unknown legacy calls remain unclassified. */
 export interface ChatAgentRunSummary {
+  /** Root execution of the assistant reply, including historical snapshots. */
+  isRoot?: boolean;
   id: string;
   parentId?: string;
   type?: string;
