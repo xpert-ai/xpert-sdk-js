@@ -1,5 +1,17 @@
 # @xpert-ai/xpert-sdk
 
+## 0.4.0
+
+### Minor Changes
+
+- 27628de: Add client.conversations.branch() to create an independent conversation through a selected assistant message using a stable requestId for retries. Expose typed branch requests, source metadata, message ancestry, and branching availability without changing threads.copy().
+
+  Requires the corresponding Xpert backend branch API and migration. The server validates the message boundary and saved execution state; creating a branch does not start a model run.
+
+### Patch Changes
+
+- c91030f: Expose the optional isRoot marker on chat execution summaries so clients can identify root timing in live and branched conversation history.
+
 ## 0.3.0
 
 ### Minor Changes
