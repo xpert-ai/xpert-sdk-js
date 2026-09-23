@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.4.1
+
+### Patch Changes
+
+- 12a9433: Allow conversations.search to receive an AbortSignal so inline conversation mention pickers can cancel obsolete title searches.
+
 ## 0.4.0
 
 ### Minor Changes
