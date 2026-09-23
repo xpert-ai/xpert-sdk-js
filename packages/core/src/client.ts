@@ -33,6 +33,7 @@ import {
   ThreadCopyOptions,
   Knowledgebase,
   ChatConversation,
+  ConversationBranchRequest,
   ChatMessage,
   ChatMessageFeedback,
   ChatTaskSummarySection,
@@ -3144,6 +3145,14 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** Create an independent conversation through the selected assistant message, without starting a run. */
+  async branch(conversationId: string, input: ConversationBranchRequest): Promise<ChatConversation> {
+    return this.fetch(`/conversations/${encodeURIComponent(conversationId)}/branch`, {
+      method: 'POST',
+      json: input,
+    });
+  }
+
   /** Read the persisted resource versions and current concurrency revision. */
   async getRuntimeResources(id: string): Promise<RuntimeResourcesSelection> {
     return this.fetch(`/conversations/${encodeURIComponent(id)}/runtime-resources`);

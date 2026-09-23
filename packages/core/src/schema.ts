@@ -45,6 +45,30 @@ export type ThreadCopyOptions = {
   requestId: string;
 };
 
+export type ConversationBranchRequest = {
+  sourceThreadId: string;
+  afterMessageId: string;
+  requestId: string;
+};
+
+export type ConversationBranchSource = {
+  conversationId: string;
+  threadId: string;
+  messageId: string;
+  requestId: string;
+};
+
+export type ChatMessageBranchUnavailableReason =
+  | 'message_not_complete'
+  | 'checkpoint_unavailable'
+  | 'graph_changed'
+  | 'state_not_supported';
+
+export type ChatMessageBranching = {
+  available: boolean;
+  reason?: ChatMessageBranchUnavailableReason;
+};
+
 type MultitaskStrategy = "reject" | "interrupt" | "rollback" | "enqueue";
 
 export type CancelAction = "interrupt" | "rollback";
@@ -1298,6 +1322,7 @@ export type ChatConversationOptions = Record<string, unknown> & {
 };
 
 export interface ChatConversation {
+  branchSource?: ConversationBranchSource | null;
   id: string;
   threadId: string;
   title?: string;
@@ -1562,6 +1587,9 @@ export type ChatMessageInputCheckpoint = {
 };
 
 export interface ChatMessage {
+  parentId?: string | null;
+  historical?: boolean;
+  branching?: ChatMessageBranching;
   id: string;
   conversationId?: string;
   role?: string;
