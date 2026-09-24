@@ -1,3 +1,4 @@
+import type { MessageFileChangeStats } from "./types.messages.js";
 import {
   Assistant,
   AssistantGraph,
@@ -3246,6 +3247,17 @@ export class ConversationsClient extends BaseClient {
         signal: options?.signal,
         emptyResponse: null,
       }
+    );
+  }
+
+  async getMessageFileChangeStats(
+    conversationId: string,
+    messageId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<MessageFileChangeStats> {
+    return this.fetch<MessageFileChangeStats>(
+      `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/file-changes`,
+      { signal: options?.signal }
     );
   }
 

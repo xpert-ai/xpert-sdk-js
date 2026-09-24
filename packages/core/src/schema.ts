@@ -1,5 +1,22 @@
 import type { JSONSchema7 } from "json-schema";
 import type { RuntimeResourcesSelection } from "./runtime-resources.js";
+import type {
+  ChatFileChange,
+  ChatTaskSummaryContribution,
+  ChatTaskSummaryOutput,
+  ChatTaskSummaryPlan,
+  ChatTaskSummarySource,
+  ChatTaskSummaryTodos,
+} from "./types.messages.js";
+export type {
+  ChatFileChange,
+  ChatTaskSummaryContribution,
+  ChatTaskSummaryOutput,
+  ChatTaskSummaryPlan,
+  ChatTaskSummaryResourceReference,
+  ChatTaskSummarySource,
+  ChatTaskSummaryTodos,
+} from "./types.messages.js";
 
 type Optional<T> = T | null | undefined;
 
@@ -1397,84 +1414,6 @@ export interface ThreadGoal {
   updatedAt?: string;
 }
 
-export type ChatTaskSummaryResourceReference =
-  | { type: "message"; messageId: string }
-  | {
-      type: "workspace_file";
-      workspacePath: string;
-      fileAssetId?: string;
-      storageFileId?: string;
-    }
-  | { type: "artifact"; artifactId: string }
-  | { type: "browser"; serviceId?: string; url?: string }
-  | { type: "url"; url: string };
-
-export type ChatTaskSummaryOutput = {
-  id: string;
-  kind:
-    | "file"
-    | "image"
-    | "document"
-    | "spreadsheet"
-    | "presentation"
-    | "site"
-    | "url"
-    | "mcp_app";
-  title: string;
-  description?: string;
-  status?: "pending" | "running" | "success" | "error";
-  resource?: ChatTaskSummaryResourceReference;
-  messageId?: string;
-  updatedAt?: string;
-};
-
-export type ChatTaskSummarySource = {
-  id: string;
-  kind:
-    | "attachment"
-    | "code"
-    | "quote"
-    | "image"
-    | "web_page"
-    | "file_element"
-    | "knowledge"
-    | "skill"
-    | "plugin"
-    | "sub_agent";
-  title: string;
-  description?: string;
-  resource?: ChatTaskSummaryResourceReference;
-  messageId?: string;
-  updatedAt?: string;
-};
-
-export type ChatTaskSummaryPlan = {
-  title: string;
-  excerpt: string;
-  messageId?: string;
-  updatedAt?: string;
-};
-
-export type ChatTaskSummaryTodos = {
-  componentId: string;
-  title?: string;
-  items: Array<{
-    id: string;
-    content: string;
-    status: "pending" | "in_progress" | "completed";
-  }>;
-  messageId?: string;
-  updatedAt?: string;
-};
-
-export type ChatTaskSummaryContribution = {
-  version: 1;
-  plan?: ChatTaskSummaryPlan;
-  todos?: ChatTaskSummaryTodos;
-  outputs?: ChatTaskSummaryOutput[];
-  sources?: ChatTaskSummarySource[];
-};
-
 export type ChatTaskSummaryAgent = {
   id: string;
   parentId?: string;
@@ -1504,12 +1443,14 @@ export type ChatTaskSummaryPending = {
 };
 
 export type ChatTaskSummarySection =
+  | "fileChanges"
   | "outputs"
   | "sources"
   | "agents"
   | "pending";
 
 export type ChatTaskSummarySectionItem =
+  | ChatFileChange
   | ChatTaskSummaryOutput
   | ChatTaskSummarySource
   | ChatTaskSummaryAgent
@@ -1529,6 +1470,7 @@ export type ChatTaskSummarySnapshot = {
     plan?: ChatTaskSummaryPlan;
     todos?: ChatTaskSummaryTodos;
   };
+  fileChanges?: ChatTaskSummaryList<ChatFileChange>;
   outputs: ChatTaskSummaryList<ChatTaskSummaryOutput>;
   sources: ChatTaskSummaryList<ChatTaskSummarySource>;
   agents: ChatTaskSummaryList<ChatTaskSummaryAgent>;
