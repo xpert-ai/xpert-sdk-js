@@ -2590,11 +2590,36 @@ function normalizeSandboxProxyPath(path?: string): string {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
+/** Reuses the SDK transport and credentials for Assistant-authorized services. */
+class SandboxRuntimeClient extends BaseClient {
+  request<T>(
+    path: string,
+    options: RequestInit & {
+      json?: SandboxManagedServiceStartInput;
+      params?: { organizationId?: string; tail?: number };
+      signal?: AbortSignal;
+    }
+  ): Promise<T> {
+    return this.fetch<T>(`/sandbox${path}`, options);
+  }
+}
+
 export class SandboxClient extends BaseClient {
+  private readonly runtimeClient: SandboxRuntimeClient;
+
   constructor(config?: ClientConfig) {
     super({
       ...config,
       apiUrl: deriveSandboxApiUrl(config?.apiUrl),
+    });
+    const apiUrl = config?.apiUrl?.replace(/\/+$/, "");
+    // Thread operations use Assistant authorization; conversation management
+    // and cookie-protected previews keep the platform sandbox API.
+    this.runtimeClient = new SandboxRuntimeClient({
+      ...config,
+      apiUrl: apiUrl?.endsWith("/api/sandbox")
+        ? `${apiUrl.slice(0, -"/api/sandbox".length)}/api/ai`
+        : apiUrl,
     });
   }
 
@@ -2615,7 +2640,7 @@ export class SandboxClient extends BaseClient {
     threadId: string,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedService[]> {
-    return this.fetch<SandboxManagedService[]>(
+    return this.runtimeClient.request<SandboxManagedService[]>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services`,
       {
         params: { organizationId: options?.organizationId },
@@ -2643,7 +2668,7 @@ export class SandboxClient extends BaseClient {
     serviceId: string,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedService> {
-    return this.fetch<SandboxManagedService>(
+    return this.runtimeClient.request<SandboxManagedService>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}`,
       {
         params: { organizationId: options?.organizationId },
@@ -2673,7 +2698,7 @@ export class SandboxClient extends BaseClient {
     input: SandboxManagedServiceStartInput,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedService> {
-    return this.fetch<SandboxManagedService>(
+    return this.runtimeClient.request<SandboxManagedService>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/start`,
       {
         method: "POST",
@@ -2706,7 +2731,7 @@ export class SandboxClient extends BaseClient {
     serviceId: string,
     options?: SandboxServiceLogsOptions
   ): Promise<SandboxManagedServiceLogs> {
-    return this.fetch<SandboxManagedServiceLogs>(
+    return this.runtimeClient.request<SandboxManagedServiceLogs>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/logs`,
       {
         params: {
@@ -2738,7 +2763,7 @@ export class SandboxClient extends BaseClient {
     serviceId: string,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedService> {
-    return this.fetch<SandboxManagedService>(
+    return this.runtimeClient.request<SandboxManagedService>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/stop`,
       {
         method: "POST",
@@ -2768,7 +2793,7 @@ export class SandboxClient extends BaseClient {
     serviceId: string,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedService> {
-    return this.fetch<SandboxManagedService>(
+    return this.runtimeClient.request<SandboxManagedService>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/restart`,
       {
         method: "POST",
@@ -2798,7 +2823,7 @@ export class SandboxClient extends BaseClient {
     serviceId: string,
     options?: SandboxServiceRequestOptions
   ): Promise<SandboxManagedServicePreviewSession> {
-    return this.fetch<SandboxManagedServicePreviewSession>(
+    return this.runtimeClient.request<SandboxManagedServicePreviewSession>(
       `/threads/${encodeSandboxPathSegment(threadId)}/services/${encodeSandboxPathSegment(serviceId)}/preview-session`,
       {
         method: "POST",

@@ -491,7 +491,7 @@ describe.each([["global"], ["mocked"]])(
           expect(url).toBeInstanceOf(URL);
           expect((url as URL).origin).toBe("https://xpert.local");
           expect((url as URL).pathname).toBe(
-            "/api/sandbox/threads/thread-1/services"
+            "/api/ai/sandbox/threads/thread-1/services"
           );
           expect((url as URL).searchParams.get("organizationId")).toBe(
             "org-1"
@@ -535,7 +535,7 @@ describe.each([["global"], ["mocked"]])(
         expectedFetchMock.mockImplementationOnce(async (url, init) => {
           expect(url).toBeInstanceOf(URL);
           expect((url as URL).pathname).toBe(
-            "/api/sandbox/threads/thread-1/services/service-1/stop"
+            "/api/ai/sandbox/threads/thread-1/services/service-1/stop"
           );
           expect(init?.method).toBe("POST");
 
@@ -722,27 +722,27 @@ describe.each([["global"], ["mocked"]])(
         };
         const expectations = [
           {
-            path: "/api/sandbox/threads/thread-1/services/service-1",
+            path: "/api/ai/sandbox/threads/thread-1/services/service-1",
             method: "GET",
             payload: servicePayload,
           },
           {
-            path: "/api/sandbox/threads/thread-1/services/start",
+            path: "/api/ai/sandbox/threads/thread-1/services/start",
             method: "POST",
             payload: servicePayload,
           },
           {
-            path: "/api/sandbox/threads/thread-1/services/service-1/logs",
+            path: "/api/ai/sandbox/threads/thread-1/services/service-1/logs",
             method: "GET",
             payload: logsPayload,
           },
           {
-            path: "/api/sandbox/threads/thread-1/services/service-1/restart",
+            path: "/api/ai/sandbox/threads/thread-1/services/service-1/restart",
             method: "POST",
             payload: servicePayload,
           },
           {
-            path: "/api/sandbox/threads/thread-1/services/service-1/preview-session",
+            path: "/api/ai/sandbox/threads/thread-1/services/service-1/preview-session",
             method: "POST",
             payload: previewPayload,
           },
