@@ -84,6 +84,7 @@ export type {
   ChatResumeRequest,
   ChatRetryRequest,
   ChatSendRequest,
+  ProjectSelection,
   ChatState,
   ChatTarget,
   ChatInterruptPatch,

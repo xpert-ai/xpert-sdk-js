@@ -1144,6 +1144,12 @@ export interface ChatInterruptPatch {
 
 export type ChatFollowUpMode = 'queue' | 'steer';
 
+/** Explicit first-send Project intent; an omitted value retains legacy host behavior. */
+export type ProjectSelection =
+  | { mode: 'auto-new' }
+  | { mode: 'none' }
+  | { mode: 'existing'; projectId: string };
+
 /**
  * Send a new message in a chat run.
  */
@@ -1151,6 +1157,7 @@ export interface ChatSendRequest {
   action: 'send';
   conversationId?: string;
   projectId?: string;
+  projectSelection?: ProjectSelection;
   environmentId?: string;
   sandboxEnvironmentId?: string;
   message: {
@@ -1219,6 +1226,7 @@ export interface LegacyChatRequest {
   state?: ChatState;
   agentKey?: string;
   projectId?: string;
+  projectSelection?: ProjectSelection;
   conversationId?: string;
   environmentId?: string;
   id?: string;
@@ -1334,6 +1342,7 @@ export type ChatConversationFrom =
   | "wecom";
 
 export type ChatConversationOptions = Record<string, unknown> & {
+  projectSelection?: ProjectSelection;
   runtimeResources?: RuntimeResourcesSelection;
   runtimeCapabilities?: RuntimeCapabilitiesSelection | null;
 };
