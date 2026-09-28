@@ -29,7 +29,7 @@ export class McpAppsClient {
 
   getResource(appInstanceId: string, query?: McpAppReviveQuery, options?: McpRequestOptions) {
     return this.transport.request<McpAppResourceResponse>(
-      `/xpert-toolset/mcp-apps/${id(appInstanceId)}/resource`,
+      `/ai/mcp-apps/${id(appInstanceId)}/resource`,
       { params: params(query), signal: options?.signal }
     );
   }
@@ -40,7 +40,7 @@ export class McpAppsClient {
     query?: McpAppReviveQuery,
     options?: McpRequestOptions
   ) {
-    return this.transport.request<T>(`/xpert-toolset/mcp-apps/${id(appInstanceId)}/rpc`, {
+    return this.transport.request<T>(`/ai/mcp-apps/${id(appInstanceId)}/rpc`, {
       method: 'POST',
       json: request,
       params: params(query),
@@ -55,7 +55,7 @@ export class McpAppsClient {
     options?: McpRequestOptions
   ) {
     return this.transport.request<McpAppApprovalResult>(
-      `/xpert-toolset/mcp-apps/${id(appInstanceId)}/approvals/${id(approvalId)}/approve`,
+      `/ai/mcp-apps/${id(appInstanceId)}/approvals/${id(approvalId)}/approve`,
       { method: 'POST', params: params(query), signal: options?.signal }
     );
   }
@@ -67,13 +67,13 @@ export class McpAppsClient {
     options?: McpRequestOptions
   ) {
     return this.transport.request<McpAppApprovalResult>(
-      `/xpert-toolset/mcp-apps/${id(appInstanceId)}/approvals/${id(approvalId)}/reject`,
+      `/ai/mcp-apps/${id(appInstanceId)}/approvals/${id(approvalId)}/reject`,
       { method: 'POST', params: params(query), signal: options?.signal }
     );
   }
 
   async teardown(appInstanceId: string, query?: McpAppReviveQuery, options?: McpRequestOptions) {
-    await this.transport.request(`/xpert-toolset/mcp-apps/${id(appInstanceId)}`, {
+    await this.transport.request(`/ai/mcp-apps/${id(appInstanceId)}`, {
       method: 'DELETE',
       params: params(query),
       emptyResponse: undefined,
