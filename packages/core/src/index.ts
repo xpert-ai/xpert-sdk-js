@@ -281,6 +281,7 @@ export type {
   XpertViewValueType,
   XpertWorkbenchViewOptions,
   WorkbenchAssistantConversationOpenRequest,
+  WorkbenchExtensionViewOpenRequest,
   WorkbenchNavigationOpenPayload,
   WorkbenchNavigationOpenTarget,
   WorkbenchOpenFile,
@@ -289,3 +290,4 @@ export type {
 } from "./view-extension.js";
 
 export type * from "./runtime-resources.js";
+export * from "./workbench-open.js";
