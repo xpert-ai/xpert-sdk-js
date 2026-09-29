@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.4.4
+
+### Patch Changes
+
+- 6eddc8f: Route MCP App resource, RPC, approval and teardown requests through `/api/ai/mcp-apps` so ChatKit credentials use the Assistant API authentication boundary. Requires the matching backend AI MCP Apps controller; requests do not fall back to management routes.
+- 00d790d: Add the `workbench.view.open` live event contract: `WORKBENCH_VIEW_OPEN_EVENT`, `WorkbenchViewOpenEvent`, `WorkbenchExtensionViewOpenRequest` and `parseWorkbenchViewOpenEvent` so Agents can request opening a Workbench extension view scoped to a project. Views declare `workbench.openMode: 'auto' | 'on-demand'`; the legacy `fixed` option is deprecated in favor of the manifest's `visible` field. Opening a view does not grant access; permissions still apply.
+
 ## 0.4.3
 
 ### Patch Changes
