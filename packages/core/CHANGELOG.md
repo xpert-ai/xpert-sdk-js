@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.5.0
+
+### Minor Changes
+
+- b8c1ac6: Expose ConversationResourceCard, ResourceCardOpenTarget and TMessageContentResourceCard in the public message contract. Resource receipts retain typed Workbench targets through streamed and persisted messages; the server owns reply/execution identities.
+
 ## 0.4.4
 
 ### Patch Changes
