@@ -1,3 +1,4 @@
+import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
   Assistant,
@@ -2143,6 +2144,8 @@ export class Client<
    */
   public sandbox: SandboxClient;
 
+  public workbench: WorkbenchClient;
+
   /**
    * The client for Xpert extension views and their workspace-file grants.
    */
@@ -2212,6 +2215,7 @@ export class Client<
     this.knowledges = new KnowledgesClient(config);
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
+    this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
     this.xperts = new XpertsClient(config);
@@ -3528,5 +3532,43 @@ export class ConversationsClient extends BaseClient {
         method: "DELETE",
       }
     );
+  }
+}
+
+class WorkbenchTransportClient extends BaseClient implements WorkbenchTransport {
+  constructor(config?: ClientConfig) {
+    super({ ...config, apiUrl: deriveMcpApiUrl(config?.apiUrl) });
+  }
+  json<T>(
+    path: string,
+    options?: RequestInit & { json?: unknown; params?: Record<string, unknown> },
+  ): Promise<T> {
+    return this.fetch<T>(path, { ...options, signal: options?.signal ?? undefined });
+  }
+  async blob(
+    path: string,
+    options?: RequestInit & { params?: Record<string, unknown> },
+  ): Promise<Blob> {
+    const [url, init] = this.prepareFetchOptions(path, options);
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const response = await this.asyncCaller.fetch(url, finalInit);
+    return response.blob();
+  }
+  async socketAuthentication() {
+    const [url, init] = this.prepareFetchOptions("");
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const headers = new Headers(finalInit.headers);
+    const token =
+      headers.get("x-client-secret") ??
+      headers.get("authorization")?.replace(/^Bearer /, "") ??
+      headers.get("x-api-key");
+    if (!token) throw new Error("Terminal authentication is required.");
+    const basePath = url.pathname.replace(/\/api\/?$/, "").replace(/\/$/, "");
+    return {
+      url: url.origin,
+      path: `${basePath}/socket.io`,
+      token,
+      organizationId: headers.get("organization-id") ?? undefined,
+    };
   }
 }

@@ -27,6 +27,7 @@
   "dependencies": {
     "p-queue": "^6.6.2",
     "p-retry": "4",
+    "socket.io-client": "^4.8.4",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
