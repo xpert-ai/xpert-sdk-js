@@ -1,3 +1,4 @@
+import type { TMessageContentResourceCard } from './resource-card.js';
 type ImageDetail = "auto" | "low" | "high";
 type MessageContentImageUrl = {
   type: "image_url";
@@ -5,7 +6,7 @@ type MessageContentImageUrl = {
 };
 
 type MessageContentText = { type: "text"; text: string };
-type MessageContentComplex = MessageContentText | MessageContentImageUrl;
+type MessageContentComplex = MessageContentText | MessageContentImageUrl | TMessageContentResourceCard;
 type MessageContent = string | MessageContentComplex[];
 
 /**

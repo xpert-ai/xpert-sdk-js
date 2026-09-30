@@ -291,3 +291,4 @@ export type {
 
 export type * from "./runtime-resources.js";
 export * from "./workbench-open.js";
+export type { ConversationResourceCard, ResourceCardOpenTarget, TMessageContentResourceCard } from './resource-card.js';
