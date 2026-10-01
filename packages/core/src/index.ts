@@ -84,6 +84,7 @@ export type {
   ChatResumeRequest,
   ChatRetryRequest,
   ChatSendRequest,
+  ProjectSelection,
   ChatState,
   ChatTarget,
   ChatInterruptPatch,
@@ -280,6 +281,7 @@ export type {
   XpertViewValueType,
   XpertWorkbenchViewOptions,
   WorkbenchAssistantConversationOpenRequest,
+  WorkbenchExtensionViewOpenRequest,
   WorkbenchNavigationOpenPayload,
   WorkbenchNavigationOpenTarget,
   WorkbenchOpenFile,
@@ -298,3 +300,9 @@ export type {
   TerminalConnection,
   TerminalOpenOptions,
 } from "./workbench.js";
+export * from "./workbench-open.js";
+export type {
+  ConversationResourceCard,
+  ResourceCardOpenTarget,
+  TMessageContentResourceCard,
+} from "./resource-card.js";

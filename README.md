@@ -122,6 +122,19 @@ and `version` together; the version pins what the conversation will use.
 fall back to administrator APIs on 401, 403, or 404. Existing administrator methods continue to use
 `/api/connector`; browser OAuth starts include credentials for callback-session binding.
 
+### Sandbox runtime services
+
+Use the same `Client({ apiUrl: 'https://xpert.example/api/ai', ... })` configuration for
+`client.sandbox.listThreadServices`, `getThreadService`, `startThreadService`,
+`getThreadServiceLogs`, `stopThreadService`, `restartThreadService`, and
+`createThreadServicePreviewSession`. These methods use `/api/ai/sandbox/threads/:threadId/services`
+with the configured credentials, request hooks, and cancellation signals.
+
+Conversation management methods and `getConversationServiceProxyUrl` continue to use
+`/api/sandbox`. Open the `previewUrl` returned by preview-session creation as supplied by the
+server. Deploy the matching AI sandbox backend before upgrading; runtime errors do not fall
+back to platform management routes. UI clients do not need to override `client.sandbox`.
+
 ## 🛠️ Development
 
 ### Commands

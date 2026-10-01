@@ -40,11 +40,11 @@ describe('McpAppsClient', () => {
 
     expect(transport.requests).toEqual([
       {
-        path: '/xpert-toolset/mcp-apps/app%2F1/resource',
+        path: '/ai/mcp-apps/app%2F1/resource',
         options: { params: reviveQuery, signal: undefined },
       },
       {
-        path: '/xpert-toolset/mcp-apps/app%2F1/rpc',
+        path: '/ai/mcp-apps/app%2F1/rpc',
         options: {
           method: 'POST',
           json: { jsonrpc: '2.0', id: 'rpc-1', method: 'tools/call' },
@@ -70,11 +70,12 @@ describe('McpAppsClient', () => {
     );
 
     await client.approve('app/1', 'approval/1', reviveQuery);
+    await client.reject('app/1', 'approval/1', reviveQuery);
     await client.teardown('app/1', reviveQuery);
 
     expect(transport.requests).toEqual([
       {
-        path: '/xpert-toolset/mcp-apps/app%2F1/approvals/approval%2F1/approve',
+        path: '/ai/mcp-apps/app%2F1/approvals/approval%2F1/approve',
         options: {
           method: 'POST',
           params: reviveQuery,
@@ -82,7 +83,15 @@ describe('McpAppsClient', () => {
         },
       },
       {
-        path: '/xpert-toolset/mcp-apps/app%2F1',
+        path: '/ai/mcp-apps/app%2F1/approvals/approval%2F1/reject',
+        options: {
+          method: 'POST',
+          params: reviveQuery,
+          signal: undefined,
+        },
+      },
+      {
+        path: '/ai/mcp-apps/app%2F1',
         options: {
           method: 'DELETE',
           params: reviveQuery,

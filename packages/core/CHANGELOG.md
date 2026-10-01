@@ -1,5 +1,30 @@
 # @xpert-ai/xpert-sdk
 
+## 0.5.0
+
+### Minor Changes
+
+- b8c1ac6: Expose ConversationResourceCard, ResourceCardOpenTarget and TMessageContentResourceCard in the public message contract. Resource receipts retain typed Workbench targets through streamed and persisted messages; the server owns reply/execution identities.
+
+## 0.4.4
+
+### Patch Changes
+
+- 6eddc8f: Route MCP App resource, RPC, approval and teardown requests through `/api/ai/mcp-apps` so ChatKit credentials use the Assistant API authentication boundary. Requires the matching backend AI MCP Apps controller; requests do not fall back to management routes.
+- 00d790d: Add the `workbench.view.open` live event contract: `WORKBENCH_VIEW_OPEN_EVENT`, `WorkbenchViewOpenEvent`, `WorkbenchExtensionViewOpenRequest` and `parseWorkbenchViewOpenEvent` so Agents can request opening a Workbench extension view scoped to a project. Views declare `workbench.openMode: 'auto' | 'on-demand'`; the legacy `fixed` option is deprecated in favor of the manifest's `visible` field. Opening a view does not grant access; permissions still apply.
+
+## 0.4.3
+
+### Patch Changes
+
+- 63b357f: Route thread sandbox service operations through the Assistant API at `/api/ai/sandbox`, preserving authentication hooks, headers, and cancellation. Keep conversation management and preview proxy URLs on `/api/sandbox`. Requires the matching backend AI sandbox endpoints; runtime errors never fall back to platform routes.
+
+## 0.4.2
+
+### Patch Changes
+
+- 7160ae7: Add message file-change statistics and file delivery metadata to conversation APIs, including cancellation support for statistics requests. Define the required message and task-summary types within the SDK so consumers do not need `@xpert-ai/chatkit-types`.
+
 ## 0.4.1
 
 ### Patch Changes
