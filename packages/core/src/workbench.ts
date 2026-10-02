@@ -52,7 +52,7 @@ function scopePath(scope: WorkspaceFileScope) {
   const id = scope.kind === 'assistant' ? scope.assistantId : scope.conversationId;
   if (!id.trim()) throw new Error('A workspace scope is required.');
   return scope.kind === 'assistant'
-    ? `/xpert/${encodeURIComponent(id)}/workspace`
+    ? `/ai/assistants/${encodeURIComponent(id)}/workspace`
     : `/ai/conversations/${encodeURIComponent(id)}`;
 }
 

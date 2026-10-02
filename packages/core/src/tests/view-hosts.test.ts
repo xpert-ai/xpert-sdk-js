@@ -254,18 +254,18 @@ describe("ViewHostsClient", () => {
 
     const [createUrl, createInit] = fetchMock.mock.calls[0] ?? [];
     expect((createUrl as URL).pathname).toBe(
-      "/api/workspace-files/view-sessions"
+      "/api/ai/workspace-files/view-sessions"
     );
     expect(createInit?.credentials).toBe("include");
 
     const [grantUrl] = fetchMock.mock.calls[1] ?? [];
     expect((grantUrl as URL).pathname).toBe(
-      "/api/workspace-files/view-sessions/session%2F1/grants"
+      "/api/ai/workspace-files/view-sessions/session%2F1/grants"
     );
 
     const [revokeUrl, revokeInit] = fetchMock.mock.calls[2] ?? [];
     expect((revokeUrl as URL).pathname).toBe(
-      "/api/workspace-files/view-sessions/session%2F1"
+      "/api/ai/workspace-files/view-sessions/session%2F1"
     );
     expect(revokeInit?.credentials).toBe("include");
     expect(revokeInit?.method).toBe("DELETE");

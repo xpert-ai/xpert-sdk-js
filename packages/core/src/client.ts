@@ -2301,19 +2301,13 @@ export class ProjectsClient extends BaseClient {
 }
 
 export class XpertsClient extends BaseClient {
-  constructor(config?: ClientConfig) {
-    super({
-      ...config,
-      apiUrl: deriveXpertApiUrl(config?.apiUrl, "xpert"),
-    });
-  }
 
   async listWorkspaceFiles(
     xpertId: string,
     options: XpertWorkspaceFileListOptions = {}
   ): Promise<XpertWorkspaceFile[]> {
     return this.fetch<XpertWorkspaceFile[]>(
-      `/${encodeURIComponent(xpertId)}/workspace/files`,
+      `/assistants/${encodeURIComponent(xpertId)}/workspace/files`,
       {
         params: workspaceFileListParams(options),
         signal: options.signal,
@@ -2909,12 +2903,6 @@ function createViewFile(input: XpertViewFileActionRequest): {
 }
 
 class WorkspaceViewFilesClient extends BaseClient {
-  constructor(config?: ClientConfig) {
-    super({
-      ...config,
-      apiUrl: deriveXpertApiUrl(config?.apiUrl, "workspace-files"),
-    });
-  }
 
   createSession(
     hostType: XpertViewHostType,
@@ -2922,7 +2910,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     viewKey: string,
     options?: XpertViewRequestOptions
   ): Promise<XpertViewFileAccessSessionResult> {
-    return this.fetch<XpertViewFileAccessSessionResult>("/view-sessions", {
+    return this.fetch<XpertViewFileAccessSessionResult>("/workspace-files/view-sessions", {
       method: "POST",
       credentials: "include",
       json: { hostType, hostId, viewKey, runtimeScope: options?.runtimeScope },
@@ -2937,7 +2925,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<XpertViewFileAccessGrantResult> {
     return this.fetch<XpertViewFileAccessGrantResult>(
-      `/view-sessions/${encodeViewPathSegment(sessionId)}/grants`,
+      `/workspace-files/view-sessions/${encodeViewPathSegment(sessionId)}/grants`,
       {
         method: "POST",
         json: request,
@@ -2951,7 +2939,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<void> {
     await this.fetch<{ success: boolean }>(
-      `/view-sessions/${encodeViewPathSegment(sessionId)}`,
+      `/workspace-files/view-sessions/${encodeViewPathSegment(sessionId)}`,
       {
         method: "DELETE",
         credentials: "include",

@@ -48,11 +48,11 @@ describe('WorkbenchClient', () => {
     await api.saveBinaryFile(assistant, 'dir/a.docx', new Blob(['office']));
     await api.deleteFile(conversation, 'dir/a.txt');
     expect(fetchMock.mock.calls.map(([url]) => (url as URL).pathname)).toEqual([
-      '/api/xpert/a%2F1/workspace/files',
+      '/api/ai/assistants/a%2F1/workspace/files',
       '/api/ai/conversations/c1/file',
       '/api/ai/conversations/c1/file',
       '/api/ai/conversations/c1/file/upload',
-      '/api/xpert/a%2F1/workspace/file/save-binary',
+      '/api/ai/assistants/a%2F1/workspace/file/save-binary',
       '/api/ai/conversations/c1/file',
     ]);
     expect(fetchMock.mock.calls[0][1]?.signal).toBe(abort.signal);

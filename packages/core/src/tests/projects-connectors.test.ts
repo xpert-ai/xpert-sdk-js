@@ -205,7 +205,7 @@ describe("XpertsClient", () => {
 
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect((url as URL).pathname).toBe(
-      "/api/xpert/assistant%2F1/workspace/files"
+      "/api/ai/assistants/assistant%2F1/workspace/files"
     );
     expect((url as URL).searchParams.get("deepth")).toBe("12");
     expect(init?.signal).toBe(controller.signal);
