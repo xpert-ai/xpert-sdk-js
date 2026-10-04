@@ -120,3 +120,18 @@ describe('WorkbenchClient', () => {
     );
   });
 });
+
+it('downloads a pinned conversation artifact through the authenticated SDK transport', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('<h1>Saved</h1>', { headers: { 'content-type': 'text/html' } }));
+  const api = makeClient(fetchMock).workbench;
+  const controller = new AbortController();
+  const blob = await api.downloadArtifact('conversation', { artifactId: 'artifact/a', artifactVersionId: 'version/b' }, { signal: controller.signal });
+  expect(blob.type).toBe('text/html');
+  expect(await blob.text()).toBe('<h1>Saved</h1>');
+  const [url, init] = fetchMock.mock.calls[0];
+  expect((url as URL).pathname).toBe('/api/ai/conversations/conversation/artifacts/artifact%2Fa/versions/version%2Fb/content');
+  expect(init?.signal).toBe(controller.signal);
+  expect(new Headers(init?.headers).get('organization-id')).toBe('org-test');
+  expect(new Headers(init?.headers).get('x-client-secret')).toBe('cs-x-test');
+  expect(() => api.downloadArtifact('', { artifactId: 'a', artifactVersionId: 'v' })).toThrow();
+});

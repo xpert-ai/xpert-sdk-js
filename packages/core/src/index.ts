@@ -217,6 +217,7 @@ export type {
   XpertRemoteComponentRuntime,
   XpertRemoteComponentViewSchema,
   XpertRemoteViewHostEventMessage,
+  XpertRemoteViewContextChangedEvent,
   XpertResolvedViewHostContext,
   XpertViewActionDefinition,
   XpertViewActionPlacement,

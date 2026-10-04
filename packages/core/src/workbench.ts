@@ -146,6 +146,20 @@ export class WorkbenchClient {
     });
   }
 
+  /** Read an immutable delivery or review report belonging to this conversation. */
+  downloadArtifact(
+    conversationId: string,
+    resource: { artifactId: string; artifactVersionId: string },
+    options: WorkbenchRequestOptions = {}
+  ): Promise<Blob> {
+    if (![conversationId, resource.artifactId, resource.artifactVersionId].every(id => id.trim()))
+      throw new Error('A conversation and an immutable artifact version are required.');
+    return this.transport.blob(
+      `/ai/conversations/${encodeURIComponent(conversationId)}/artifacts/${encodeURIComponent(resource.artifactId)}/versions/${encodeURIComponent(resource.artifactVersionId)}/content`,
+      options
+    );
+  }
+
   async connectTerminal(options: TerminalOpenOptions): Promise<TerminalConnection> {
     if (!options.conversationId.trim()) throw new Error('A conversation is required.');
     options.signal?.throwIfAborted();
