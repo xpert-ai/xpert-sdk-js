@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.6.0
+
+### Minor Changes
+
+- 420b035: Add authenticated, cancellable Workbench downloads for immutable conversation artifacts, enabling native HTML previews and saved file-change reviews without Desktop host commands.
+
 ## 0.5.0
 
 ### Minor Changes
