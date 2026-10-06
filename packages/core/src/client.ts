@@ -1,3 +1,4 @@
+import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -1282,9 +1283,19 @@ export class ThreadsClient<
     );
   }
 
+  /** Observe committed runs and task cards without starting or resuming execution. */
+  async *watchActivity(threadId: string, options?: { signal?: AbortSignal; lastEventId?: string }): AsyncGenerator<ThreadActivitySnapshot> {
+    for await (const item of this.joinStream(threadId, options)) {
+      if (item.event === 'thread.snapshot' && isThreadActivitySnapshot(item.data) && item.data.threadId === threadId) {
+        yield item.data;
+      }
+    }
+  }
+
   async *joinStream(
     threadId: string,
     options?: {
+      signal?: AbortSignal;
       lastEventId?: string;
       streamMode?: ThreadStreamMode | ThreadStreamMode[];
     }
@@ -1294,6 +1305,8 @@ export class ThreadsClient<
       `/threads/${threadId}/stream`,
       {
         method: "GET",
+        timeoutMs: null,
+        signal: options?.signal,
         headers: options?.lastEventId
           ? { "Last-Event-ID": options.lastEventId }
           : undefined,

@@ -307,3 +307,5 @@ export type {
   ResourceCardOpenTarget,
   TMessageContentResourceCard,
 } from "./resource-card.js";
+
+export type { ThreadActivitySnapshot } from './thread-activity.js';
