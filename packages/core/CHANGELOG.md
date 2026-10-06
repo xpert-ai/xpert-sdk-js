@@ -1,5 +1,13 @@
 # @xpert-ai/xpert-sdk
 
+## 0.7.0
+
+### Minor Changes
+
+- 3d18a36: Add typed, abortable thread activity subscriptions for discovering asynchronous
+  runs and task resource-card updates. Keep thread subscriptions independent of
+  individual run cursors and disable the ordinary request timeout for SSE.
+
 ## 0.6.0
 
 ### Minor Changes
