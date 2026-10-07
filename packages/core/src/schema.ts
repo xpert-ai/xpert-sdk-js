@@ -37,6 +37,7 @@ export type ThreadStatus =
   | "error";
 
 /** Client presentation only; never used as workflow state or model input. */
+/** @deprecated Legacy UI metadata. Pause/resume use only ThreadRunControl. */
 export type ThreadDisplayPause = {
   executionId: string;
   pauseId: string;
@@ -45,7 +46,7 @@ export type ThreadDisplayPause = {
   snapshot?: string;
 };
 
-export type ThreadPauseResult = ThreadRunControl & { displayPause?: ThreadDisplayPause };
+export type ThreadPauseResult = ThreadRunControl;
 
 export type ThreadRunControl = {
   executionId: string;

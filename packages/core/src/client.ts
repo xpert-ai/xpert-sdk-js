@@ -1666,20 +1666,16 @@ export class RunsClient<
     threadId: string,
     runId: string,
     options?: {
-      displaySnapshot?: string;
       pollIntervalMs?: number;
       pollTimeoutMs?: number;
     },
   ): Promise<ThreadPauseResult> {
     const requested = await this.fetch<ThreadPauseResult>(`/threads/${threadId}/runs/${runId}/pause`, {
       method: "POST",
-      ...(options?.displaySnapshot !== undefined
-        ? { json: { displaySnapshot: options.displaySnapshot } }
-        : {}),
     });
 
     const pollIntervalMs = Math.max(100, options?.pollIntervalMs ?? 500);
-    const pollTimeoutMs = Math.max(0, options?.pollTimeoutMs ?? 5000);
+    const pollTimeoutMs = Math.max(0, options?.pollTimeoutMs ?? 0);
     if (requested.state !== "pausing" || pollTimeoutMs === 0) return requested;
 
     const deadline = Date.now() + pollTimeoutMs;
@@ -1696,10 +1692,7 @@ export class RunsClient<
         return latest;
       }
       if (thread.runControl?.executionId !== runId || !thread.runControl) return latest;
-      latest = {
-        ...thread.runControl,
-        ...(thread.displayPause ? { displayPause: thread.displayPause } : {}),
-      };
+      latest = thread.runControl;
     }
     return latest;
   }
