@@ -1,6 +1,6 @@
 {
   "name": "@xpert-ai/xpert-sdk",
-  "version": "0.4.4",
+  "version": "0.7.0",
   "description": "SDK Core functionality package",
   "type": "module",
   "main": "dist/index.js",
@@ -27,6 +27,7 @@
   "dependencies": {
     "p-queue": "^6.6.2",
     "p-retry": "4",
+    "socket.io-client": "^4.8.4",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

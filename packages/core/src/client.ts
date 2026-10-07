@@ -1,3 +1,5 @@
+import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
+import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
   Assistant,
@@ -1281,9 +1283,19 @@ export class ThreadsClient<
     );
   }
 
+  /** Observe committed runs and task cards without starting or resuming execution. */
+  async *watchActivity(threadId: string, options?: { signal?: AbortSignal; lastEventId?: string }): AsyncGenerator<ThreadActivitySnapshot> {
+    for await (const item of this.joinStream(threadId, options)) {
+      if (item.event === 'thread.snapshot' && isThreadActivitySnapshot(item.data) && item.data.threadId === threadId) {
+        yield item.data;
+      }
+    }
+  }
+
   async *joinStream(
     threadId: string,
     options?: {
+      signal?: AbortSignal;
       lastEventId?: string;
       streamMode?: ThreadStreamMode | ThreadStreamMode[];
     }
@@ -1293,6 +1305,8 @@ export class ThreadsClient<
       `/threads/${threadId}/stream`,
       {
         method: "GET",
+        timeoutMs: null,
+        signal: options?.signal,
         headers: options?.lastEventId
           ? { "Last-Event-ID": options.lastEventId }
           : undefined,
@@ -2136,6 +2150,8 @@ export class Client<
    */
   public sandbox: SandboxClient;
 
+  public workbench: WorkbenchClient;
+
   /**
    * The client for Xpert extension views and their workspace-file grants.
    */
@@ -2205,6 +2221,7 @@ export class Client<
     this.knowledges = new KnowledgesClient(config);
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
+    this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
     this.xperts = new XpertsClient(config);
@@ -2290,19 +2307,13 @@ export class ProjectsClient extends BaseClient {
 }
 
 export class XpertsClient extends BaseClient {
-  constructor(config?: ClientConfig) {
-    super({
-      ...config,
-      apiUrl: deriveXpertApiUrl(config?.apiUrl, "xpert"),
-    });
-  }
 
   async listWorkspaceFiles(
     xpertId: string,
     options: XpertWorkspaceFileListOptions = {}
   ): Promise<XpertWorkspaceFile[]> {
     return this.fetch<XpertWorkspaceFile[]>(
-      `/${encodeURIComponent(xpertId)}/workspace/files`,
+      `/assistants/${encodeURIComponent(xpertId)}/workspace/files`,
       {
         params: workspaceFileListParams(options),
         signal: options.signal,
@@ -2907,12 +2918,6 @@ function createViewFile(input: XpertViewFileActionRequest): {
  * or its runtime scope changes.
  */
 class WorkspaceViewFilesClient extends BaseClient {
-  constructor(config?: ClientConfig) {
-    super({
-      ...config,
-      apiUrl: deriveXpertApiUrl(config?.apiUrl, "workspace-files"),
-    });
-  }
 
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
@@ -2921,7 +2926,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     viewKey: string,
     options?: XpertViewRequestOptions
   ): Promise<XpertViewFileAccessSessionResult> {
-    return this.fetch<XpertViewFileAccessSessionResult>("/view-sessions", {
+    return this.fetch<XpertViewFileAccessSessionResult>("/workspace-files/view-sessions", {
       method: "POST",
       credentials: "include",
       json: { hostType, hostId, viewKey, runtimeScope: options?.runtimeScope },
@@ -2937,7 +2942,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<XpertViewFileAccessGrantResult> {
     return this.fetch<XpertViewFileAccessGrantResult>(
-      `/view-sessions/${encodeViewPathSegment(sessionId)}/grants`,
+      `/workspace-files/view-sessions/${encodeViewPathSegment(sessionId)}/grants`,
       {
         method: "POST",
         json: request,
@@ -2952,7 +2957,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<void> {
     await this.fetch<{ success: boolean }>(
-      `/view-sessions/${encodeViewPathSegment(sessionId)}`,
+      `/workspace-files/view-sessions/${encodeViewPathSegment(sessionId)}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -3603,5 +3608,43 @@ export class ConversationsClient extends BaseClient {
         method: "DELETE",
       }
     );
+  }
+}
+
+class WorkbenchTransportClient extends BaseClient implements WorkbenchTransport {
+  constructor(config?: ClientConfig) {
+    super({ ...config, apiUrl: deriveMcpApiUrl(config?.apiUrl) });
+  }
+  json<T>(
+    path: string,
+    options?: RequestInit & { json?: unknown; params?: Record<string, unknown> },
+  ): Promise<T> {
+    return this.fetch<T>(path, { ...options, signal: options?.signal ?? undefined });
+  }
+  async blob(
+    path: string,
+    options?: RequestInit & { params?: Record<string, unknown> },
+  ): Promise<Blob> {
+    const [url, init] = this.prepareFetchOptions(path, options);
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const response = await this.asyncCaller.fetch(url, finalInit);
+    return response.blob();
+  }
+  async socketAuthentication() {
+    const [url, init] = this.prepareFetchOptions("");
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const headers = new Headers(finalInit.headers);
+    const token =
+      headers.get("x-client-secret") ??
+      headers.get("authorization")?.replace(/^Bearer /, "") ??
+      headers.get("x-api-key");
+    if (!token) throw new Error("Terminal authentication is required.");
+    const basePath = url.pathname.replace(/\/api\/?$/, "").replace(/\/$/, "");
+    return {
+      url: url.origin,
+      path: `${basePath}/socket.io`,
+      token,
+      organizationId: headers.get("organization-id") ?? undefined,
+    };
   }
 }

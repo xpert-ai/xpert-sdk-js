@@ -541,6 +541,17 @@ export interface XpertRemoteViewHostEventMessage {
   visualization?: XpertViewHostEventVisualization;
 }
 
+/** Broadcast after an authorized context change, including to hidden mounted Views. */
+export interface XpertRemoteViewContextChangedEvent extends XpertRemoteViewHostEventMessage {
+  type: "view.context.changed";
+  data: {
+    /** Monotonic within the View instance; use it to discard stale asynchronous results. */
+    revision: number;
+    /** Complete target scope; null means no binding, not an unresolved scope. */
+    runtimeScope: Required<XpertViewRuntimeScopeInput>;
+  };
+}
+
 export interface XpertViewHostEventMessage
   extends XpertRemoteViewHostEventMessage {
   hostType?: string;

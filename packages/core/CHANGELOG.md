@@ -1,5 +1,25 @@
 # @xpert-ai/xpert-sdk
 
+## 0.7.0
+
+### Minor Changes
+
+- 3d18a36: Add typed, abortable thread activity subscriptions for discovering asynchronous
+  runs and task resource-card updates. Keep thread subscriptions independent of
+  individual run cursors and disable the ordinary request timeout for SSE.
+
+## 0.6.0
+
+### Minor Changes
+
+- 420b035: Add authenticated, cancellable Workbench downloads for immutable conversation artifacts, enabling native HTML previews and saved file-change reviews without Desktop host commands.
+
+## 0.5.0
+
+### Minor Changes
+
+- b8c1ac6: Expose ConversationResourceCard, ResourceCardOpenTarget and TMessageContentResourceCard in the public message contract. Resource receipts retain typed Workbench targets through streamed and persisted messages; the server owns reply/execution identities.
+
 ## 0.4.4
 
 ### Patch Changes

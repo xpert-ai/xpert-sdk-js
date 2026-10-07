@@ -217,6 +217,7 @@ export type {
   XpertRemoteComponentRuntime,
   XpertRemoteComponentViewSchema,
   XpertRemoteViewHostEventMessage,
+  XpertRemoteViewContextChangedEvent,
   XpertResolvedViewHostContext,
   XpertViewActionDefinition,
   XpertViewActionPlacement,
@@ -290,5 +291,21 @@ export type {
 } from "./view-extension.js";
 
 export type * from "./runtime-resources.js";
+
+export { WorkbenchClient } from "./workbench.js";
+export type {
+  WorkspaceFileScope,
+  WorkspaceFileDocument,
+  WorkbenchRequestOptions,
+  TerminalEvent,
+  TerminalConnection,
+  TerminalOpenOptions,
+} from "./workbench.js";
 export * from "./workbench-open.js";
-export type { ConversationResourceCard, ResourceCardOpenTarget, TMessageContentResourceCard } from './resource-card.js';
+export type {
+  ConversationResourceCard,
+  ResourceCardOpenTarget,
+  TMessageContentResourceCard,
+} from "./resource-card.js";
+
+export type { ThreadActivitySnapshot } from './thread-activity.js';
