@@ -2904,6 +2904,15 @@ function createViewFile(input: XpertViewFileActionRequest): {
   return { blob, fileName };
 }
 
+/**
+ * Internal workspace-file transport used by Client.viewHosts in the trusted host.
+ * A view first creates a scoped access session, then requests a grant for each
+ * file and purpose (preview or download), and finally reads the granted bytes.
+ * The host performs authenticated reads because isolated remote-view iframes
+ * cannot reliably use the session cookie themselves. Callers decide how to
+ * deliver the returned Blob to the view and revoke the session when it closes
+ * or its runtime scope changes.
+ */
 class WorkspaceViewFilesClient extends BaseClient {
   constructor(config?: ClientConfig) {
     super({
@@ -2912,6 +2921,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     });
   }
 
+  /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
     hostType: XpertViewHostType,
     hostId: string,
@@ -2927,6 +2937,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     });
   }
 
+  /** Request a server-authorized file URL for a specific purpose in the session. */
   createGrant(
     sessionId: string,
     request: XpertViewFileAccessRequest,
@@ -2942,6 +2953,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     );
   }
 
+  /** Revoke the access session when the view closes or changes runtime scope. */
   async revokeSession(
     sessionId: string,
     options?: XpertViewRequestOptions
@@ -2954,6 +2966,43 @@ class WorkspaceViewFilesClient extends BaseClient {
         signal: options?.signal,
       }
     );
+  }
+
+  /**
+   * Read a server-issued grant URL through the host's authenticated SDK transport.
+   * Only the configured workspace content service is allowed; redirects are
+   * rejected to avoid forwarding credentials to another endpoint. Request hooks
+   * and cancellation are preserved, and the response is returned as a Blob.
+   */
+  async readContent(
+    grantUrl: string,
+    options?: XpertViewRequestOptions
+  ): Promise<Blob> {
+    const base = new URL(
+      `${deriveXpertApiUrl(this.apiUrl, "workspace-files")}/`
+    );
+    const target = new URL(grantUrl, base);
+    // Grant URLs are server-issued capabilities, never arbitrary download URLs.
+    // Validate before the SDK attaches authentication or invokes request hooks.
+    if (
+      target.origin !== base.origin ||
+      !target.pathname.startsWith(`${base.pathname}content/`) ||
+      target.username ||
+      target.password ||
+      target.search ||
+      target.hash
+    ) {
+      throw new Error("Invalid workspace file access URL.");
+    }
+    const [url, init] = this.prepareFetchOptions("", {
+      credentials: "include",
+      redirect: "error",
+      signal: options?.signal,
+    });
+    url.pathname = target.pathname;
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    const response = await this.asyncCaller.fetch(url, finalInit);
+    return response.blob();
   }
 }
 
@@ -3148,6 +3197,14 @@ export class ViewHostsClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<XpertViewFileAccessGrantResult> {
     return this.workspaceFiles.createGrant(sessionId, request, options);
+  }
+
+  /** Read a granted file in the trusted host before previewing it in an isolated iframe. */
+  readFileAccess(
+    grantUrl: string,
+    options?: XpertViewRequestOptions
+  ): Promise<Blob> {
+    return this.workspaceFiles.readContent(grantUrl, options);
   }
 
   revokeFileAccessSession(
