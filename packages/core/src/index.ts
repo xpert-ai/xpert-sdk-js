@@ -304,6 +304,11 @@ export type {
 export * from "./workbench-open.js";
 export type {
   ConversationResourceCard,
+  ResourceCardContent,
+  ResourceCardField,
+  ResourceCardFile,
+  ResourceCardFileReference,
+  ResourceCardImage,
   ResourceCardOpenTarget,
   TMessageContentResourceCard,
 } from "./resource-card.js";
