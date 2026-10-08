@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.8.0
+
+### Minor Changes
+
+- c2d4de5: Add `Client.viewHosts.readFileAccess` to read granted workspace file bytes through the trusted host's SDK transport. The method preserves session cookies, request hooks and cancellation, restricts requests to the configured workspace content service, and rejects redirects. Hosts can provide temporary previews to opaque-origin remote views without exposing credentials or relaxing iframe isolation.
+- 641d5d0: Pause requests no longer accept or upload display snapshots. Return the durable run-control acknowledgement immediately by default; optional status polling remains available. Existing saved pauses resume through their server checkpoint and pause ID.
+
 ## 0.7.0
 
 ### Minor Changes
