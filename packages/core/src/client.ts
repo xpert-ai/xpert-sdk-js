@@ -1,3 +1,4 @@
+import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
@@ -2151,6 +2152,7 @@ export class Client<
   public sandbox: SandboxClient;
 
   public workbench: WorkbenchClient;
+  public groups: GroupsClient;
 
   /**
    * The client for Xpert extension views and their workspace-file grants.
@@ -2193,7 +2195,31 @@ export class Client<
    */
   private "~configHash": string | undefined;
 
+  private readonly config: ClientConfig;
+
+  /** Original Workbench APIs with group-scoped authorization and the same view protocol. */
+  forGroupWorkbench(groupId: string): Client<TStateType> {
+    if (!this.config.apiUrl) throw new Error("Group Workbench requires apiUrl");
+    const client = new Client<TStateType>({
+      ...this.config,
+      apiUrl: `${this.config.apiUrl.replace(/\/+$/, "")}/groups/${encodeURIComponent(groupId)}/workbench`,
+    });
+    client.groups = this.groups;
+    client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
+    return client;
+  }
+
+  /** Existing Composer APIs, constrained to one authorized group member. */
+  forGroupComposer(groupId: string, participantId: string): Client {
+    if (!this.config.apiUrl) throw new Error("Group Composer requires apiUrl");
+    return new Client({
+      ...this.config,
+      apiUrl: `${this.config.apiUrl.replace(/\/+$/, "")}/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(participantId)}/composer`,
+    });
+  }
+
   constructor(config?: ClientConfig) {
+    this.config = config ?? {};
     this["~configHash"] = (() =>
       JSON.stringify({
         apiUrl: config?.apiUrl,
@@ -2222,6 +2248,7 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
+    this.groups = new GroupsClient(new GroupsTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
     this.xperts = new XpertsClient(config);
@@ -2918,6 +2945,7 @@ function createViewFile(input: XpertViewFileActionRequest): {
  * or its runtime scope changes.
  */
 class WorkspaceViewFilesClient extends BaseClient {
+  constructor(config?: ClientConfig, private readonly contentApiUrl?: string) { super(config); }
 
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
@@ -2977,7 +3005,7 @@ class WorkspaceViewFilesClient extends BaseClient {
     options?: XpertViewRequestOptions
   ): Promise<Blob> {
     const base = new URL(
-      `${deriveXpertApiUrl(this.apiUrl, "workspace-files")}/`
+      `${deriveXpertApiUrl(this.contentApiUrl ?? this.apiUrl, "workspace-files")}/`
     );
     const target = new URL(grantUrl, base);
     // Grant URLs are server-issued capabilities, never arbitrary download URLs.
@@ -3007,12 +3035,12 @@ class WorkspaceViewFilesClient extends BaseClient {
 export class ViewHostsClient extends BaseClient {
   private workspaceFiles: WorkspaceViewFilesClient;
 
-  constructor(config?: ClientConfig) {
+  constructor(config?: ClientConfig, fileContentApiUrl?: string) {
     super({
       ...config,
       apiUrl: deriveXpertApiUrl(config?.apiUrl, "view-hosts"),
     });
-    this.workspaceFiles = new WorkspaceViewFilesClient(config);
+    this.workspaceFiles = new WorkspaceViewFilesClient(config, fileContentApiUrl);
   }
 
   listSlotViews(
@@ -3646,5 +3674,19 @@ class WorkbenchTransportClient extends BaseClient implements WorkbenchTransport 
       token,
       organizationId: headers.get("organization-id") ?? undefined,
     };
+  }
+}
+
+class GroupsTransportClient extends BaseClient implements GroupTransport {
+  json<T>(path: string, options?: RequestInit & { json?: unknown; params?: Record<string, unknown> }): Promise<T> {
+    return this.fetch<T>(path, { ...options, signal: options?.signal ?? undefined });
+  }
+  async *stream(path: string, options?: { signal?: AbortSignal; lastEventId?: string }): AsyncGenerator<{ id?: string; event: string; data: unknown }> {
+    const [url, prepared] = this.prepareFetchOptions(path, { method: "GET", signal: options?.signal, timeoutMs: null, headers: options?.lastEventId ? { "Last-Event-ID": options.lastEventId } : undefined });
+    const init = this.onRequest ? await this.onRequest(url, prepared) : prepared;
+    const response = await this.asyncCaller.fetch(url, init);
+    if (!response.body) return;
+    const stream: ReadableStream<{ id?: string; event: string; data: unknown }> = response.body.pipeThrough(BytesLineDecoder()).pipeThrough(SSEDecoder());
+    yield* IterableReadableStream.fromReadableStream(stream);
   }
 }
