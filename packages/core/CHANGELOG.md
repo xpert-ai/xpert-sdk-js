@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.8.1
+
+### Patch Changes
+
+- c32f4a9: Expose resource-card image galleries, file lists, summary fields, and stable provider file references. Support `workbench.file` targets with optional preview files, keeping the SDK wire types aligned with ChatKit.
+
 ## 0.8.0
 
 ### Minor Changes
