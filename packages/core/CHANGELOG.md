@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.8.2
+
+### Patch Changes
+
+- 9979f60: Read View file grants through the authenticated runtime content endpoint instead of relying on third-party cookies. Validate the grant URL before attaching credentials, preserve cancellation and binary content, and reject redirects and malformed paths.
+
 ## 0.8.1
 
 ### Patch Changes
