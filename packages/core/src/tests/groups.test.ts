@@ -25,7 +25,10 @@ describe('group client', () => {
     await workbench.viewHosts.createFileAccessSession('agent', 'main', 'tasks', { runtimeScope });
     expect((fetch.mock.calls.at(-1)![0] as URL).pathname).toBe('/api/ai/groups/group%2F1/workbench/workspace-files/view-sessions');
     await workbench.viewHosts.readFileAccess('/api/workspace-files/content/session/grant/result.txt');
-    expect((fetch.mock.calls.at(-1)![0] as URL).pathname).toBe('/api/workspace-files/content/session/grant/result.txt');
+    const [fileUrl, fileInit] = fetch.mock.calls.at(-1)!;
+    expect((fileUrl as URL).pathname).toBe('/api/ai/groups/group%2F1/workbench/workspace-files/view-sessions/session/grants/grant/content/result.txt');
+    expect(new Headers(fileInit?.headers).get('Authorization')).toBe('Bearer cs-x-group');
+    expect(new Headers(fileInit?.headers).has('x-group-session')).toBe(false);
   });
   it('routes structured messages through configured authentication without author fields', async () => {
     const fetch = vi

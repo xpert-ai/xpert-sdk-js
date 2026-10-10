@@ -1,5 +1,6 @@
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
+import { workspaceFileContentRoute } from './workspace-file-content.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -2995,7 +2996,7 @@ class WorkspaceViewFilesClient extends BaseClient {
   }
 
   /**
-   * Read a server-issued grant URL through the host's authenticated SDK transport.
+   * Read a server-issued grant through the authenticated runtime API, without cookies.
    * Only the configured workspace content service is allowed; redirects are
    * rejected to avoid forwarding credentials to another endpoint. Request hooks
    * and cancellation are preserved, and the response is returned as a Blob.
@@ -3007,25 +3008,12 @@ class WorkspaceViewFilesClient extends BaseClient {
     const base = new URL(
       `${deriveXpertApiUrl(this.contentApiUrl ?? this.apiUrl, "workspace-files")}/`
     );
-    const target = new URL(grantUrl, base);
-    // Grant URLs are server-issued capabilities, never arbitrary download URLs.
-    // Validate before the SDK attaches authentication or invokes request hooks.
-    if (
-      target.origin !== base.origin ||
-      !target.pathname.startsWith(`${base.pathname}content/`) ||
-      target.username ||
-      target.password ||
-      target.search ||
-      target.hash
-    ) {
-      throw new Error("Invalid workspace file access URL.");
-    }
-    const [url, init] = this.prepareFetchOptions("", {
-      credentials: "include",
+    const route = workspaceFileContentRoute(grantUrl, base);
+    const [url, init] = this.prepareFetchOptions(route, {
+      credentials: "omit",
       redirect: "error",
       signal: options?.signal,
     });
-    url.pathname = target.pathname;
     const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
     const response = await this.asyncCaller.fetch(url, finalInit);
     return response.blob();

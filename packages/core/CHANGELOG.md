@@ -1,5 +1,21 @@
 # @xpert-ai/xpert-sdk
 
+## 0.9.0
+
+### Minor Changes
+
+- a17b53d: Expose Client.groups for shared conversation membership, authored messages, delivery controls, scoped sessions, public SSE replay and claimed human interactions. All requests use the Client transport and authentication hooks.
+
+### Patch Changes
+
+- 4836f39: Use `/ai/conversations/:id/workspace/*` for conversation-scoped Workbench file operations so directory listings do not collide with parsed attachment APIs. Keep Assistant-scoped file routes unchanged. Requires the matching Xpert server update that exposes the conversation workspace routes.
+
+## 0.8.2
+
+### Patch Changes
+
+- 9979f60: Read View file grants through the authenticated runtime content endpoint instead of relying on third-party cookies. Validate the grant URL before attaching credentials, preserve cancellation and binary content, and reject redirects and malformed paths.
+
 ## 0.8.1
 
 ### Patch Changes

@@ -47,13 +47,15 @@ describe('WorkbenchClient', () => {
     await api.saveBinaryFile(conversation, 'dir/a.docx', new Blob(['office']));
     await api.saveBinaryFile(assistant, 'dir/a.docx', new Blob(['office']));
     await api.deleteFile(conversation, 'dir/a.txt');
+    await api.listFiles(conversation, 'dir');
     expect(fetchMock.mock.calls.map(([url]) => (url as URL).pathname)).toEqual([
       '/api/ai/assistants/a%2F1/workspace/files',
-      '/api/ai/conversations/c1/file',
-      '/api/ai/conversations/c1/file',
-      '/api/ai/conversations/c1/file/upload',
+      '/api/ai/conversations/c1/workspace/file',
+      '/api/ai/conversations/c1/workspace/file',
+      '/api/ai/conversations/c1/workspace/file/upload',
       '/api/ai/assistants/a%2F1/workspace/file/save-binary',
-      '/api/ai/conversations/c1/file',
+      '/api/ai/conversations/c1/workspace/file',
+      '/api/ai/conversations/c1/workspace/files',
     ]);
     expect(fetchMock.mock.calls[0][1]?.signal).toBe(abort.signal);
     expect(fetchMock.mock.calls[2][1]?.body).toBe(

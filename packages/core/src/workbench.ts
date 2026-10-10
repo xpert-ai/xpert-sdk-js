@@ -53,7 +53,7 @@ function scopePath(scope: WorkspaceFileScope) {
   if (!id.trim()) throw new Error('A workspace scope is required.');
   return scope.kind === 'assistant'
     ? `/ai/assistants/${encodeURIComponent(id)}/workspace`
-    : `/ai/conversations/${encodeURIComponent(id)}`;
+    : `/ai/conversations/${encodeURIComponent(id)}/workspace`;
 }
 
 export class WorkbenchClient {
