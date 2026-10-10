@@ -27,7 +27,11 @@ export interface GroupTransport {
   ): AsyncGenerator<{ id?: string; event: string; data: unknown }>;
 }
 
-/** All group traffic uses this client's configured authentication/refresh hooks. */
+/**
+ * Group APIs reuse the client's configured ChatKit authentication/refresh hooks.
+ * The authenticated host mints conversation-scoped credentials through
+ * POST /api/ai/v1/chatkit/sessions; GroupsClient does not mint credentials.
+ */
 export class GroupsClient {
   constructor(private readonly transport: GroupTransport) {}
   workbenchContext(groupId: string, options?: GroupRequestOptions): Promise<ChatGroupWorkbenchContext> {
@@ -106,15 +110,6 @@ export class GroupsClient {
       ...options,
       method: 'PATCH',
       json: input,
-    });
-  }
-  createSession(
-    groupId: string,
-    options?: GroupRequestOptions
-  ): Promise<{ secret: string; expiresAt: string }> {
-    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/sessions`, {
-      ...options,
-      method: 'POST',
     });
   }
   control(
