@@ -56,6 +56,7 @@ import {
   ThreadGoalSetRequest,
   XpertProject,
   XpertProjectListOptions,
+  XpertProjectCreateInput,
   XpertProjectTypeRef,
   XpertProjectTypeCatalog,
   XpertProjectEntry,
@@ -2299,6 +2300,18 @@ export class ProjectsClient extends BaseClient {
         skip: options.skip ?? 0,
         take: options.take ?? 100,
       },
+      signal: options.signal,
+    });
+  }
+
+  /** Create a Project using the current interactive user's permissions. */
+  async create(
+    input: XpertProjectCreateInput,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<XpertProject> {
+    return this.fetch<XpertProject>("", {
+      method: "POST",
+      json: input,
       signal: options.signal,
     });
   }

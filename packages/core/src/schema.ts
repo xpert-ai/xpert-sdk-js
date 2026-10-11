@@ -762,6 +762,12 @@ export type XpertProject = {
   updatedAt?: string;
 };
 
+export type XpertProjectCreateInput = {
+  name: string;
+  xpertIds: string[];
+  projectType?: XpertProjectTypeRef;
+};
+
 export type XpertProjectListOptions = {
   search?: string;
   applicationKey?: string;
