@@ -28,6 +28,17 @@ function makeClient(fetchMock: typeof fetch) {
 }
 
 describe('WorkbenchClient', () => {
+  it('preserves server-resolved file capabilities, including read-only and legacy responses', async () => {
+    for (const capabilities of [undefined, { canRead: true, canWrite: false }, { canRead: true, canWrite: true }]) {
+      const response = { filePath: 'report.md', contents: '# report', capabilities };
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(response), {
+        headers: { 'content-type': 'application/json' },
+      }));
+      const file = await makeClient(fetchMock).workbench.readFile({ kind: 'conversation', conversationId: 'c1' }, 'report.md');
+      expect(file.capabilities).toEqual(capabilities);
+      expect(file.contents).toBe('# report');
+    }
+  });
   it('uses scoped SDK authorization for file metadata, text, uploads, deletion and binary downloads', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

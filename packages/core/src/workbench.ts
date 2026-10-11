@@ -5,7 +5,12 @@ import type { Socket } from 'socket.io-client';
 export type WorkspaceFileScope =
   | { kind: 'assistant'; assistantId: string }
   | { kind: 'conversation'; conversationId: string };
-export type WorkspaceFileDocument = XpertWorkspaceFile & { contents?: string };
+/** Server-resolved authority for this file and request scope; missing means unknown. */
+export type WorkspaceFileCapabilities = { canRead: boolean; canWrite: boolean };
+export type WorkspaceFileDocument = XpertWorkspaceFile & {
+  contents?: string;
+  capabilities?: WorkspaceFileCapabilities;
+};
 export type WorkbenchRequestOptions = { signal?: AbortSignal };
 export type TerminalEvent =
   | { type: 'connected' }

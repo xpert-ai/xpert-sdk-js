@@ -296,6 +296,7 @@ export { WorkbenchClient } from "./workbench.js";
 export type {
   WorkspaceFileScope,
   WorkspaceFileDocument,
+  WorkspaceFileCapabilities,
   WorkbenchRequestOptions,
   TerminalEvent,
   TerminalConnection,
