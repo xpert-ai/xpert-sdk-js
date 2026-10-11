@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.9.2
+
+### Patch Changes
+
+- 86e25fa: Describe optional server-resolved read/write capabilities on workspace file documents. Older servers may omit this field; consumers must treat missing write authority as read-only.
+
 ## 0.9.1
 
 ### Patch Changes
