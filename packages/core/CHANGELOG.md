@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.10.0
+
+### Minor Changes
+
+- ced0cd4: Add ProjectsClient.create for interactive ChatKit project creation with typed Assistant bindings and cancellation.
+
 ## 0.9.2
 
 ### Patch Changes
