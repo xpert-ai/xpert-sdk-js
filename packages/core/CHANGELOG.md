@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.12.0
+
+### Minor Changes
+
+- 53c9e00: Add authorized MCP App history reads and explicit interaction resumption without replaying the opening tool. Expose typed session expiry errors while preserving access denials and unrelated transport failures.
+
 ## 0.11.0
 
 ### Minor Changes
