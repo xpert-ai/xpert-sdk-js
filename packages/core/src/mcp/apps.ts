@@ -1,6 +1,9 @@
 import type { McpTransport } from './transport.js';
+import { rethrowMcpAppSessionError } from './session-error.js';
 import type {
   McpAppApprovalResult,
+  McpAppHistory,
+  McpAppHistoryQuery,
   McpAppResourceResponse,
   McpAppReviveQuery,
   McpRequestOptions,
@@ -31,7 +34,23 @@ export class McpAppsClient {
     return this.transport.request<McpAppResourceResponse>(
       `/ai/mcp-apps/${id(appInstanceId)}/resource`,
       { params: params(query), signal: options?.signal }
-    );
+    ).catch(rethrowMcpAppSessionError);
+  }
+
+  /** Read the saved result under the current message ACL without opening a tool session. */
+  getHistory(appInstanceId: string, query: McpAppHistoryQuery, options?: McpRequestOptions) {
+    return this.transport.request<McpAppHistory>(
+      `/ai/mcp-apps/${id(appInstanceId)}/history`,
+      { params: { messageId: query.messageId }, signal: options?.signal }
+    ).catch(rethrowMcpAppSessionError);
+  }
+
+  /** Explicitly renew interaction authority; this does not rerun the opening tool. */
+  resume(appInstanceId: string, query: McpAppHistoryQuery, options?: McpRequestOptions) {
+    return this.transport.request<McpAppResourceResponse>(
+      `/ai/mcp-apps/${id(appInstanceId)}/resume`,
+      { method: 'POST', params: { messageId: query.messageId }, signal: options?.signal }
+    ).catch(rethrowMcpAppSessionError);
   }
 
   rpc<T = unknown>(
@@ -45,7 +64,7 @@ export class McpAppsClient {
       json: request,
       params: params(query),
       signal: options?.signal,
-    });
+    }).catch(rethrowMcpAppSessionError);
   }
 
   approve(
