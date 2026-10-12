@@ -27,16 +27,42 @@ export interface ChatGroupParticipant {
   role: 'owner' | 'member';
   active: boolean;
 }
-export type ChatGroupCandidate = Pick<ChatGroupParticipant, 'kind' | 'subjectId' | 'name' | 'avatar'>;
+export type ChatGroupCandidate = Pick<
+  ChatGroupParticipant,
+  'kind' | 'subjectId' | 'name' | 'avatar'
+>;
 /** Per-message choices belong to one addressed Assistant, never inferred from @ text. */
 export interface ChatGroupComposerInput {
   participantId: string;
   projectId?: string;
-  files?: { filePath: string; workspacePath: string; originalName?: string; mimeType?: string; size?: number; purpose: 'workspace' }[];
+  files?: {
+    filePath: string;
+    workspacePath: string;
+    originalName?: string;
+    mimeType?: string;
+    size?: number;
+    purpose: 'workspace';
+  }[];
   runtimeResources?: RuntimeResourcesSelection;
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
 }
 export interface ChatGroupCommunication {
+  /** Host-owned task context, unavailable in group send inputs. */
+  projectTask?: {
+    invocationId: string;
+    projectId: string;
+    projectTaskId: string;
+    taskExecutionId: string;
+  };
+  runtimeResult?: {
+    invocationId: string;
+    consumerExecutionId: string;
+    revision: number;
+    projectId: string;
+    projectTaskId: string;
+    taskExecutionId: string;
+    specificationDigest: string;
+  };
   composer?: ChatGroupComposerInput;
   intent: ChatGroupIntent;
   senderId: string;
@@ -55,10 +81,19 @@ export interface ChatGroupMessage {
   createdAt: string;
   communication: ChatGroupCommunication;
   runtimeParticipantIds?: string[];
-  deliveries: { participantId: string; status: ChatGroupDeliveryStatus }[];
+  deliveries: {
+    participantId: string;
+    status: ChatGroupDeliveryStatus;
+    /** Credential-redacted execution failure; absent for pending or successful deliveries. */
+    error?: string;
+  }[];
 }
 /** Member IDs are bound to exact @ spans in the submitted text; no hidden recipient selection. */
-export interface ChatGroupMention { participantId: string; start: number; end: number }
+export interface ChatGroupMention {
+  participantId: string;
+  start: number;
+  end: number;
+}
 export type ChatGroupSendInput = {
   composer?: ChatGroupComposerInput;
   clientMessageId: string;
@@ -72,17 +107,17 @@ export interface ChatGroupCreateInput {
   assistantId: string;
 }
 export interface ChatGroupSummary {
-  purpose: 'group'
-  id: string
-  threadId: string
-  title: string
-  updatedAt: string
-  lastMessage: string
-  memberCount: number
-  members: Pick<ChatGroupParticipant, 'id' | 'kind' | 'name' | 'avatar'>[]
-  unread: boolean
-  pinned: boolean
-  archived: boolean
+  purpose: 'group';
+  id: string;
+  threadId: string;
+  title: string;
+  updatedAt: string;
+  lastMessage: string;
+  memberCount: number;
+  members: Pick<ChatGroupParticipant, 'id' | 'kind' | 'name' | 'avatar'>[];
+  unread: boolean;
+  pinned: boolean;
+  archived: boolean;
 }
 
 export interface ChatGroupSnapshot {
@@ -130,6 +165,8 @@ export interface ChatGroupRuntimeView {
   executionId: string;
   messageId?: string;
   status: string;
+  /** Credential-redacted failure for this execution, independent of later retries. */
+  error?: string;
   messages: ChatMessage[];
 }
 
@@ -140,4 +177,18 @@ export interface ChatGroupWorkbenchContext {
   conversationId: string;
   threadId: string;
   projectId: string | null;
+}
+
+/** Select the Assistant participants that may execute tasks in the shared Project. */
+export interface ChatGroupProjectInput {
+  project: { mode: 'create'; id: string; name: string } | { mode: 'existing'; projectId: string };
+  /** Include the primary Assistant. Updates add participants and preserve existing bindings. */
+  participantIds: string[];
+}
+
+export interface ChatGroupProject {
+  projectId: string;
+  name: string;
+  /** Complete active selection after the operation, including previously bound members. */
+  participantIds: string[];
 }

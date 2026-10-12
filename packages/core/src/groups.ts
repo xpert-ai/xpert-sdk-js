@@ -1,4 +1,6 @@
 import type {
+  ChatGroupProject,
+  ChatGroupProjectInput,
   ChatGroupCandidate,
   ChatGroupWorkbenchContext,
   ChatGroupInteractionClaim,
@@ -34,7 +36,25 @@ export interface GroupTransport {
  */
 export class GroupsClient {
   constructor(private readonly transport: GroupTransport) {}
-  workbenchContext(groupId: string, options?: GroupRequestOptions): Promise<ChatGroupWorkbenchContext> {
+  project(groupId: string, options?: GroupRequestOptions): Promise<ChatGroupProject | null> {
+    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/project`, options);
+  }
+  /** A caller-generated project id makes creation retries reuse the same Project. */
+  setProject(
+    groupId: string,
+    input: ChatGroupProjectInput,
+    options?: GroupRequestOptions
+  ): Promise<ChatGroupProject> {
+    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/project`, {
+      ...options,
+      method: 'PUT',
+      json: input,
+    });
+  }
+  workbenchContext(
+    groupId: string,
+    options?: GroupRequestOptions
+  ): Promise<ChatGroupWorkbenchContext> {
     return this.transport.json(`/groups/${encodeURIComponent(groupId)}/workbench/context`, options);
   }
   list(options?: GroupRequestOptions): Promise<ChatGroupSummary[]> {
@@ -63,11 +83,26 @@ export class GroupsClient {
       params: { before: options?.before, limit: options?.limit },
     });
   }
-  runtime(groupId: string, messageId: string, participantId: string, options?: GroupRequestOptions): Promise<ChatGroupRuntimeView> {
-    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/messages/${encodeURIComponent(messageId)}/runtime/${encodeURIComponent(participantId)}`, options);
+  runtime(
+    groupId: string,
+    messageId: string,
+    participantId: string,
+    options?: GroupRequestOptions
+  ): Promise<ChatGroupRuntimeView> {
+    return this.transport.json(
+      `/groups/${encodeURIComponent(groupId)}/messages/${encodeURIComponent(messageId)}/runtime/${encodeURIComponent(participantId)}`,
+      options
+    );
   }
-  composerContext(groupId: string, participantId: string, options?: GroupRequestOptions): Promise<{ projectId: string | null; locked: boolean; busy: boolean }> {
-    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(participantId)}/composer/context`, options);
+  composerContext(
+    groupId: string,
+    participantId: string,
+    options?: GroupRequestOptions
+  ): Promise<{ projectId: string | null; locked: boolean; busy: boolean }> {
+    return this.transport.json(
+      `/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(participantId)}/composer/context`,
+      options
+    );
   }
   send(
     groupId: string,

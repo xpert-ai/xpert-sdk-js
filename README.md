@@ -2,6 +2,8 @@
 
 A modern TypeScript monorepo template built with pnpm workspaces, featuring multiple packages, examples, and comprehensive development tooling.
 
+For group Project creation, participant management and the group Composer authorization boundary, see [Group Projects](docs/group-projects.md).
+
 ## 🏗️ Project Structure
 
 ```ini
