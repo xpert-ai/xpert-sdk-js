@@ -13,6 +13,7 @@ const STATUS_NO_RETRY = [
   407, // Proxy Authentication Required
   408, // Request Timeout
   409, // Conflict
+  410, // Gone: an expired interaction lease requires explicit recovery, not retries.
   422, // Unprocessable Entity
 ];
 

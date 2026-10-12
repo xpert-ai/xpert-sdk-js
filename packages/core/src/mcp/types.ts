@@ -361,6 +361,25 @@ export interface McpAppResourceResponse {
   toolResult?: unknown;
 }
 
+export interface McpAppHistoryQuery {
+  messageId: string;
+}
+
+/** Saved output, not a grant to execute tools or use the original credentials. */
+export interface McpAppHistory {
+  appInstanceId: string;
+  toolInput: Record<string, unknown>;
+  toolResult?: {
+    content: Array<{ type: string; text?: string; [key: string]: unknown }>;
+    structuredContent?: Record<string, unknown>;
+    isError?: boolean;
+    _meta?: Record<string, unknown>;
+  };
+  toolResultTruncated: boolean;
+  createdAt: number;
+  canResume: boolean;
+}
+
 export interface McpAppApprovalResult {
   approved: boolean;
   rejected?: boolean;
