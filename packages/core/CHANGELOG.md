@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.13.2
+
+### Patch Changes
+
+- 62876e6: Add assistant_template runtime catalog components with optional title and description. Package selection continues to use bindingId and version. Release this SDK before updating ChatKit to display template sub-agents.
+
 ## 0.13.1
 
 ### Patch Changes
