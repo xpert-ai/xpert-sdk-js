@@ -87,6 +87,14 @@ describe('runtime resources contract', () => {
     });
   });
 
+  it('requests selection metadata explicitly without changing the default browse query', async () => {
+    const { client, fetch } = setup({ items: [], total: 0 });
+    await client.assistants.getResources('assistant');
+    await client.assistants.getResources('assistant', { purpose: 'selection' });
+    expect((fetch.mock.calls[0][0] as URL).searchParams.has('purpose')).toBe(false);
+    expect((fetch.mock.calls[1][0] as URL).searchParams.get('purpose')).toBe('selection');
+  });
+
   it('preserves pinned versions and server revisions when reading and replacing selections', async () => {
     const { client, fetch } = setup(selection);
     await expect(client.conversations.getRuntimeResources('conversation/1')).resolves.toEqual(

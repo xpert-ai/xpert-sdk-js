@@ -668,6 +668,8 @@ export class AssistantsClient extends BaseClient {
       projectId?: string;
       search?: string;
       kind?: RuntimeResourceKind;
+      /** Include assistant-role packages only to restore existing selections. Defaults to browse. */
+      purpose?: 'browse' | 'selection';
       offset?: number;
       limit?: number;
       signal?: AbortSignal;
