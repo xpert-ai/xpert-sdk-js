@@ -73,7 +73,9 @@ export interface RuntimeResourceCatalogItem extends RuntimeResourceReference {
   diagnostics: AgentPluginDiagnostic[];
   components: Array<{
     key: string;
-    kind: 'skill' | 'mcp' | 'middleware' | 'external_xpert';
+    kind: 'skill' | 'mcp' | 'middleware' | 'external_xpert' | 'assistant_template';
+    title?: string;
+    description?: string;
     status: RuntimeResourceStatus;
   }>;
 }
