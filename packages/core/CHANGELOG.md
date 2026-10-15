@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.14.0
+
+### Minor Changes
+
+- 63edbbf: Expose pinned plugin skill command metadata through AssistantsClient.getResourceCommands, with typed command presentation, subcommands and explicit skill references.
+
 ## 0.13.2
 
 ### Patch Changes
