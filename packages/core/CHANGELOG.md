@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.13.1
+
+### Patch Changes
+
+- 14e8608: Add the optional browse or selection purpose to Assistant resource catalog queries. Selection lookup supports restoring existing conversation resources that are hidden from plugin discovery, while omitted purpose preserves default browsing behavior.
+
 ## 0.13.0
 
 ### Minor Changes
