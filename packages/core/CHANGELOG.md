@@ -1,5 +1,19 @@
 # @xpert-ai/xpert-sdk
 
+## 0.12.0
+
+### Minor Changes
+
+- 53c9e00: Add authorized MCP App history reads and explicit interaction resumption without replaying the opening tool. Expose typed session expiry errors while preserving access denials and unrelated transport failures.
+
+## 0.11.0
+
+### Minor Changes
+
+- abf243d: Add group Project creation and selection with explicit Assistant participants, using the existing group authentication scope and retry-safe project identity.
+
+  Expose per-delivery and per-execution error messages so clients can display persisted Assistant failures in group conversations and execution records.
+
 ## 0.10.0
 
 ### Minor Changes
