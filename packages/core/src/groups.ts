@@ -60,15 +60,30 @@ export class GroupsClient {
   list(options?: GroupRequestOptions): Promise<ChatGroupSummary[]> {
     return this.transport.json('/groups', options);
   }
+  /** Stable pages of eligible members; limit defaults to 50 (max 100), offset defaults to 0. */
   candidates(
-    input: { kind: 'user' | 'assistant'; search?: string; groupId?: string },
+    input: {
+      kind: 'user' | 'assistant';
+      search?: string;
+      groupId?: string;
+      limit?: number;
+      offset?: number;
+    },
     options?: GroupRequestOptions
   ): Promise<ChatGroupCandidate[]> {
     return this.transport.json(
       input.groupId
         ? `/groups/${encodeURIComponent(input.groupId)}/candidates`
         : '/groups/candidates',
-      { ...options, params: { kind: input.kind, search: input.search } }
+      {
+        ...options,
+        params: {
+          kind: input.kind,
+          search: input.search,
+          limit: input.limit,
+          offset: input.offset,
+        },
+      }
     );
   }
   create(input: ChatGroupCreateInput, options?: GroupRequestOptions): Promise<{ id: string }> {

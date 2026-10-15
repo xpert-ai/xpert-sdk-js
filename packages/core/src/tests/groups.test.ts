@@ -3,6 +3,41 @@ import { Client } from '../client.js';
 import { isGroupEvent } from '../groups.js';
 
 describe('group client', () => {
+  it('passes candidate pagination, group scope, search and cancellation without changing the array response', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify([{ kind: 'assistant', subjectId: 'expert', name: 'Expert' }]),
+            { headers: { 'content-type': 'application/json' } }
+          )
+      );
+    const client = new Client({
+      apiUrl: 'https://example.test/api/ai',
+      callerOptions: { fetch },
+      onRequest: (_url, init) => ({ ...init, headers: { Authorization: 'Bearer cs-x-group' } }),
+    });
+    const signal = new AbortController().signal;
+    const rows = await client.groups.candidates(
+      { kind: 'assistant', groupId: 'g/1', search: 'Expert', limit: 51, offset: 50 },
+      { signal }
+    );
+    expect(rows).toEqual([{ kind: 'assistant', subjectId: 'expert', name: 'Expert' }]);
+    const [url, init] = fetch.mock.calls[0];
+    expect((url as URL).pathname).toBe('/api/ai/groups/g%2F1/candidates');
+    expect(Object.fromEntries((url as URL).searchParams)).toEqual({
+      kind: 'assistant',
+      search: 'Expert',
+      limit: '51',
+      offset: '50',
+    });
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer cs-x-group');
+    expect(init?.signal).toBeDefined();
+    await client.groups.candidates({ kind: 'assistant' });
+    expect((fetch.mock.calls[1][0] as URL).pathname).toBe('/api/ai/groups/candidates');
+    expect((fetch.mock.calls[1][0] as URL).searchParams.has('limit')).toBe(false);
+  });
   it('creates or selects a shared project inside the group credential boundary, preserving retry identity', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()
