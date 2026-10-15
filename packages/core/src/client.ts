@@ -79,6 +79,7 @@ import {
 import type {
   RuntimeResourceAuthorization,
   RuntimeResourceCatalog,
+  RuntimeResourceCommand,
   RuntimeResourceKind,
   RuntimeResourcesSelection,
 } from "./runtime-resources.js";
@@ -677,6 +678,19 @@ export class AssistantsClient extends BaseClient {
   ): Promise<RuntimeResourceCatalog> {
     const { signal, ...params } = options ?? {};
     return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources`, { params, signal });
+  }
+
+  /** Read command metadata from the exact selected plugin versions. */
+  async getResourceCommands(
+    assistantId: string,
+    selection: RuntimeResourcesSelection,
+    options?: { projectId?: string; signal?: AbortSignal }
+  ): Promise<RuntimeResourceCommand[]> {
+    return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources/commands`, {
+      method: "POST",
+      json: { runtimeResources: selection, ...(options?.projectId ? { projectId: options.projectId } : {}) },
+      signal: options?.signal,
+    });
   }
 
   /**
