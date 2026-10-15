@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.13.0
+
+### Minor Changes
+
+- ae30677: Add optional limit and offset parameters to group invitation candidate queries. Preserve existing array responses, scoped authentication, and abort signals so clients can load subsequent pages without changing existing calls.
+
 ## 0.12.0
 
 ### Minor Changes
