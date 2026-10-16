@@ -35,6 +35,7 @@ export type {
   SearchItem,
   SearchItemsResponse,
   Thread,
+  ThreadSummary,
   ThreadContextUsage,
   ThreadState,
   ThreadStatus,

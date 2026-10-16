@@ -29,6 +29,7 @@ import {
   SortOrder,
   Subgraphs,
   Thread,
+  ThreadSummary,
   ThreadContextUsage,
   ThreadSelectField,
   ThreadSortBy,
@@ -952,6 +953,11 @@ export class ThreadsClient<
     return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`);
   }
 
+  /** Read thread identity and control state without loading execution checkpoint values. */
+  async getSummary(threadId: string): Promise<ThreadSummary> {
+    return this.fetch<ThreadSummary>(`/threads/${encodeURIComponent(threadId)}/summary`);
+  }
+
   /**
    * Get the last measured context usage for an agent in a thread.
    *
@@ -1716,9 +1722,9 @@ export class RunsClient<
     while (latest.state === "pausing" && Date.now() < deadline) {
       await new Promise<void>((resolve) => setTimeout(resolve, pollIntervalMs));
       if (Date.now() >= deadline) break;
-      let thread: Thread<TStateType>;
+      let thread: ThreadSummary;
       try {
-        thread = await this.fetch<Thread<TStateType>>(`/threads/${threadId}`);
+        thread = await this.fetch<ThreadSummary>(`/threads/${encodeURIComponent(threadId)}/summary`);
       } catch {
         // The pause request is durable; a transient status read must not turn
         // a successful pause into a client-side error or restart the stream.

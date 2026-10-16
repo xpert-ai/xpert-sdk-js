@@ -309,6 +309,9 @@ export interface Thread<ValuesType = DefaultValues> {
   interrupts: Record<string, Array<Interrupt>>;
 }
 
+/** Thread identity and control state without execution checkpoint values. */
+export type ThreadSummary = Omit<Thread, "values" | "interrupts">;
+
 export interface ThreadContextUsage {
   thread_id: string;
   agent_key: string | null;
