@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.14.1
+
+### Patch Changes
+
+- f9d178c: Preserve the original authenticated native Workbench transport in group clients so conversation file requests use `/api/ai/conversations/:id/workspace/*`. Keep View requests on their group-scoped routes.
+
 ## 0.14.0
 
 ### Minor Changes
