@@ -2206,6 +2206,8 @@ export class Client<
       apiUrl: `${this.config.apiUrl.replace(/\/+$/, "")}/groups/${encodeURIComponent(groupId)}/workbench`,
     });
     client.groups = this.groups;
+    // Native resources use the original authenticated API; only Views use the group namespace.
+    client.workbench = this.workbench;
     client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
     return client;
   }
