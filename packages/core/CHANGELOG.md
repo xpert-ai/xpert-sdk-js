@@ -1,5 +1,15 @@
 # @xpert-ai/xpert-sdk
 
+## 0.15.0
+
+### Minor Changes
+
+- 4453d2c: Add typed latest-sealed-reply thread copies with stable request IDs, preserving the historical-input edit contract and existing copy transport.
+
+### Patch Changes
+
+- f9d178c: Preserve the original authenticated native Workbench transport in group clients so conversation file requests use `/api/ai/conversations/:id/workspace/*`. Keep View requests on their group-scoped routes.
+
 ## 0.14.0
 
 ### Minor Changes
