@@ -2,6 +2,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { Client } from '../index.js';
 
 describe('thread run control', () => {
+  it('keeps the sealed side-chat mode and retry key in the copy request', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockImplementation(async () => new Response(JSON.stringify({ thread_id: 'side' })));
+    const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch } });
+    const input = { mode: 'latest-sealed-reply' as const, requestId: 'same-attempt' };
+    await client.threads.copy('source', input);
+    await client.threads.copy('source', input);
+    expect(
+      fetch.mock.calls.map(([url, init]) => [
+        (url as URL).pathname,
+        JSON.parse(init!.body as string),
+      ])
+    ).toEqual([
+      ['/api/ai/threads/source/copy', input],
+      ['/api/ai/threads/source/copy', input],
+    ]);
+  });
   it('uses the SDK transport and preserves the source message and pause identity', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(
       async () =>
@@ -32,10 +50,14 @@ describe('thread run control', () => {
   });
   it('acknowledges immediately without serializing legacy display data', async () => {
     const acknowledgement = { executionId: 'run', state: 'pausing', pauseId: 'token' };
-    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(JSON.stringify(acknowledgement)));
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response(JSON.stringify(acknowledgement)));
     const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch } });
     const legacy = { displaySnapshot: 'x'.repeat(3 * 1024 * 1024) };
-    expect(await client.runs.pause('thread', 'run', { ...legacy, pollTimeoutMs: 0 })).toEqual(acknowledgement);
+    expect(await client.runs.pause('thread', 'run', { ...legacy, pollTimeoutMs: 0 })).toEqual(
+      acknowledgement
+    );
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch.mock.calls[0][1]?.body).toBeUndefined();
   });
@@ -43,12 +65,14 @@ describe('thread run control', () => {
   it('optionally observes the durable checkpoint without requiring display metadata', async () => {
     const pausing = { executionId: 'run', state: 'pausing', pauseId: 'token' };
     const paused = { ...pausing, state: 'paused' };
-    const fetch = vi.fn<typeof globalThis.fetch>()
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
       .mockResolvedValueOnce(new Response(JSON.stringify(pausing)))
       .mockResolvedValueOnce(new Response(JSON.stringify({ runControl: paused })));
     const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch } });
-    expect(await client.runs.pause('thread', 'run', { pollIntervalMs: 100, pollTimeoutMs: 1000 })).toEqual(paused);
+    expect(
+      await client.runs.pause('thread', 'run', { pollIntervalMs: 100, pollTimeoutMs: 1000 })
+    ).toEqual(paused);
     expect(fetch).toHaveBeenCalledTimes(2);
   });
-
 });

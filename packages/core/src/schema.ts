@@ -57,11 +57,20 @@ export type ThreadRunControl = {
 };
 
 export type ThreadCopyOptions = {
-  /** Fork before this human message, preserving the original branch and run. */
-  beforeMessageId: string;
   /** Stable identity for safely retrying this branch creation. */
   requestId: string;
-};
+} & (
+  | {
+      /** Fork before this human message, preserving the original branch and run. */
+      beforeMessageId: string;
+      mode?: never;
+    }
+  | {
+      /** Fork the latest sealed assistant reply; the source may keep running. */
+      mode: 'latest-sealed-reply';
+      beforeMessageId?: never;
+    }
+);
 
 export type ConversationBranchRequest = {
   sourceThreadId: string;
