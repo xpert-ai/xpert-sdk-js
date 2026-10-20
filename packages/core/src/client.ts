@@ -56,6 +56,7 @@ import {
   ThreadGoalSetRequest,
   XpertProject,
   XpertProjectListOptions,
+  XpertProjectCreateInput,
   XpertProjectTypeRef,
   XpertProjectTypeCatalog,
   XpertProjectEntry,
@@ -78,6 +79,7 @@ import {
 import type {
   RuntimeResourceAuthorization,
   RuntimeResourceCatalog,
+  RuntimeResourceCommand,
   RuntimeResourceKind,
   RuntimeResourcesSelection,
 } from "./runtime-resources.js";
@@ -667,6 +669,8 @@ export class AssistantsClient extends BaseClient {
       projectId?: string;
       search?: string;
       kind?: RuntimeResourceKind;
+      /** Include assistant-role packages only to restore existing selections. Defaults to browse. */
+      purpose?: 'browse' | 'selection';
       offset?: number;
       limit?: number;
       signal?: AbortSignal;
@@ -674,6 +678,19 @@ export class AssistantsClient extends BaseClient {
   ): Promise<RuntimeResourceCatalog> {
     const { signal, ...params } = options ?? {};
     return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources`, { params, signal });
+  }
+
+  /** Read command metadata from the exact selected plugin versions. */
+  async getResourceCommands(
+    assistantId: string,
+    selection: RuntimeResourcesSelection,
+    options?: { projectId?: string; signal?: AbortSignal }
+  ): Promise<RuntimeResourceCommand[]> {
+    return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources/commands`, {
+      method: "POST",
+      json: { runtimeResources: selection, ...(options?.projectId ? { projectId: options.projectId } : {}) },
+      signal: options?.signal,
+    });
   }
 
   /**
@@ -2206,6 +2223,8 @@ export class Client<
       apiUrl: `${this.config.apiUrl.replace(/\/+$/, "")}/groups/${encodeURIComponent(groupId)}/workbench`,
     });
     client.groups = this.groups;
+    // Native resources use the original authenticated API; only Views use the group namespace.
+    client.workbench = this.workbench;
     client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
     return client;
   }
@@ -2299,6 +2318,18 @@ export class ProjectsClient extends BaseClient {
         skip: options.skip ?? 0,
         take: options.take ?? 100,
       },
+      signal: options.signal,
+    });
+  }
+
+  /** Create a Project using the current interactive user's permissions. */
+  async create(
+    input: XpertProjectCreateInput,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<XpertProject> {
+    return this.fetch<XpertProject>("", {
+      method: "POST",
+      json: input,
       signal: options.signal,
     });
   }

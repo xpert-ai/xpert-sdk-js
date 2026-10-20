@@ -9,6 +9,8 @@ export {
 export type { ClientConfig, RequestHook } from "./client.js";
 export { McpClient, McpAppsClient, McpPublicationsClient } from "./mcp/index.js";
 export type * from "./mcp/types.js";
+export { McpAppSessionError, isMcpAppSessionError } from "./mcp/session-error.js";
+export type { McpAppSessionErrorCode } from "./mcp/session-error.js";
 
 export type {
   Assistant,
@@ -296,6 +298,7 @@ export { WorkbenchClient } from "./workbench.js";
 export type {
   WorkspaceFileScope,
   WorkspaceFileDocument,
+  WorkspaceFileCapabilities,
   WorkbenchRequestOptions,
   TerminalEvent,
   TerminalConnection,

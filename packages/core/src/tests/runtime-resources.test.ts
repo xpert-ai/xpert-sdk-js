@@ -31,6 +31,19 @@ function setup(value: unknown, status = 200) {
 }
 
 describe('runtime resources contract', () => {
+  it('loads skill command metadata using pinned selections, scopes, and abort signals', async () => {
+    const commands = [{ skill: { ...selection.resources[0], skillKey: 'bom' }, packageName: 'operations', description: 'BOM', command: { subcommands: { import: {} } } }];
+    const { client, fetch } = setup(commands);
+    const signal = new AbortController().signal;
+    await expect(client.assistants.getResourceCommands('assistant/1', selection, { projectId: 'project', signal })).resolves.toEqual(commands);
+    const [url, init] = fetch.mock.calls[0];
+    expect((url as URL).pathname).toBe('/api/ai/assistants/assistant%2F1/resources/commands');
+    expect(init?.method).toBe('POST');
+    expect(init?.signal).toBe(signal);
+    expect(init?.headers).toMatchObject({ 'organization-id': 'org' });
+    expect(JSON.parse(String(init?.body))).toEqual({ runtimeResources: selection, projectId: 'project' });
+  });
+
   it('preserves display metadata, search scopes, cancellation and request hooks', async () => {
     const catalog: RuntimeResourceCatalog = {
       total: 1,
@@ -85,6 +98,14 @@ describe('runtime resources contract', () => {
       runtimeResources: selection,
       projectId: 'project',
     });
+  });
+
+  it('requests selection metadata explicitly without changing the default browse query', async () => {
+    const { client, fetch } = setup({ items: [], total: 0 });
+    await client.assistants.getResources('assistant');
+    await client.assistants.getResources('assistant', { purpose: 'selection' });
+    expect((fetch.mock.calls[0][0] as URL).searchParams.has('purpose')).toBe(false);
+    expect((fetch.mock.calls[1][0] as URL).searchParams.get('purpose')).toBe('selection');
   });
 
   it('preserves pinned versions and server revisions when reading and replacing selections', async () => {

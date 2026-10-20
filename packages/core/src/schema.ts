@@ -1,5 +1,5 @@
 import type { JSONSchema7 } from "json-schema";
-import type { RuntimeResourcesSelection } from "./runtime-resources.js";
+import type { RuntimeResourceSkillReference, RuntimeResourcesSelection } from "./runtime-resources.js";
 import type {
   ChatFileChange,
   ChatTaskSummaryContribution,
@@ -626,6 +626,8 @@ export type TCopilotModelOptions = {
 // Chat request types
 
 export type RuntimeCapabilitySkill = {
+  /** Portable plugin skill selected explicitly for this message. */
+  resource?: RuntimeResourceSkillReference;
   id: string;
   workspaceId: string;
   label: string;
@@ -769,6 +771,12 @@ export type XpertProject = {
   avatar?: Record<string, unknown> | string | null;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type XpertProjectCreateInput = {
+  name: string;
+  xpertIds: string[];
+  projectType?: XpertProjectTypeRef;
 };
 
 export type XpertProjectListOptions = {
@@ -1103,6 +1111,7 @@ export interface ChatRequestHuman {
   model?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
   runtimeResources?: RuntimeResourcesSelection;
+  resourceSkills?: RuntimeResourceSkillReference[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
   commandSource?: {
     type: "slash_command";
@@ -1354,6 +1363,7 @@ export type ChatConversationFrom =
 export type ChatConversationOptions = Record<string, unknown> & {
   projectSelection?: ProjectSelection;
   runtimeResources?: RuntimeResourcesSelection;
+  resourceSkills?: RuntimeResourceSkillReference[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection | null;
 };
 

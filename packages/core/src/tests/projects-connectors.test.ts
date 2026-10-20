@@ -15,6 +15,36 @@ function jsonResponse(value: unknown, status = 200): Response {
 }
 
 describe("ProjectsClient", () => {
+  it("creates a Project through the scoped API and preserves cancellation", async () => {
+    const project = { id: "project", name: "Acceptance", status: "active" };
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(project, 201));
+    const client = new Client({
+      apiUrl: "https://xpert.example/api/ai",
+      apiKey: "session-secret",
+      callerOptions: { fetch: fetchMock },
+      onRequest: (_url, init) => ({
+        ...init,
+        headers: { ...init.headers, "organization-id": "org" },
+      }),
+    });
+    const input = {
+      name: "Acceptance",
+      xpertIds: ["assistant"],
+      projectType: { applicationKey: "platform", projectTypeKey: "general" },
+    };
+    const controller = new AbortController();
+    await expect(client.projects.create(input, { signal: controller.signal })).resolves.toEqual(project);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect((url as URL).pathname).toBe("/api/xpert-project");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual(input);
+    expect(init?.headers).toMatchObject({
+      "x-api-key": "session-secret",
+      "organization-id": "org",
+    });
+    expect(init?.signal).toBe(controller.signal);
+  });
+
   it("lists only projects available to an Xpert and preserves request hooks", async () => {
     const projects: XpertProject[] = [
       {

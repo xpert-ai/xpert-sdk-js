@@ -1,5 +1,71 @@
 # @xpert-ai/xpert-sdk
 
+## 0.14.0
+
+### Minor Changes
+
+- 63edbbf: Expose pinned plugin skill command metadata through AssistantsClient.getResourceCommands, with typed command presentation, subcommands and explicit skill references.
+
+## 0.13.2
+
+### Patch Changes
+
+- 62876e6: Add assistant_template runtime catalog components with optional title and description. Package selection continues to use bindingId and version. Release this SDK before updating ChatKit to display template sub-agents.
+
+## 0.13.1
+
+### Patch Changes
+
+- 14e8608: Add the optional browse or selection purpose to Assistant resource catalog queries. Selection lookup supports restoring existing conversation resources that are hidden from plugin discovery, while omitted purpose preserves default browsing behavior.
+
+## 0.13.0
+
+### Minor Changes
+
+- ae30677: Add optional limit and offset parameters to group invitation candidate queries. Preserve existing array responses, scoped authentication, and abort signals so clients can load subsequent pages without changing existing calls.
+
+## 0.12.0
+
+### Minor Changes
+
+- 53c9e00: Add authorized MCP App history reads and explicit interaction resumption without replaying the opening tool. Expose typed session expiry errors while preserving access denials and unrelated transport failures.
+
+## 0.11.0
+
+### Minor Changes
+
+- abf243d: Add group Project creation and selection with explicit Assistant participants, using the existing group authentication scope and retry-safe project identity.
+
+  Expose per-delivery and per-execution error messages so clients can display persisted Assistant failures in group conversations and execution records.
+
+## 0.10.0
+
+### Minor Changes
+
+- ced0cd4: Add ProjectsClient.create for interactive ChatKit project creation with typed Assistant bindings and cancellation.
+
+## 0.9.2
+
+### Patch Changes
+
+- 86e25fa: Describe optional server-resolved read/write capabilities on workspace file documents. Older servers may omit this field; consumers must treat missing write authority as read-only.
+
+## 0.9.1
+
+### Patch Changes
+
+- fd4f79c: Remove `GroupsClient.createSession`, which targeted the removed group-specific session endpoint. Hosts must use `POST /api/ai/v1/chatkit/sessions` with `{ scope: { kind: 'conversation', conversationId } }` and supply the returned ChatKit credential through the existing authentication hooks. Group requests and SSE use the same credential transport as other ChatKit APIs.
+
+## 0.9.0
+
+### Minor Changes
+
+- a17b53d: Expose Client.groups for shared conversation membership, authored messages, delivery controls, scoped sessions, public SSE replay and claimed human interactions. All requests use the Client transport and authentication hooks.
+
+### Patch Changes
+
+- 4836f39: Use `/ai/conversations/:id/workspace/*` for conversation-scoped Workbench file operations so directory listings do not collide with parsed attachment APIs. Keep Assistant-scoped file routes unchanged. Requires the matching Xpert server update that exposes the conversation workspace routes.
+
 ## 0.8.2
 
 ### Patch Changes
