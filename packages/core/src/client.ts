@@ -1784,6 +1784,8 @@ export class RunsClient<
           signal?: AbortSignal;
           cancelOnDisconnect?: boolean;
           lastEventId?: string;
+          /** Restore display state when the retained event prefix has been trimmed. */
+          displaySnapshot?: boolean;
           streamMode?: StreamMode | StreamMode[];
         }
       | AbortSignal
@@ -1804,9 +1806,10 @@ export class RunsClient<
         method: "GET",
         timeoutMs: null,
         signal: opts?.signal,
-        headers: opts?.lastEventId
-          ? { "Last-Event-ID": opts.lastEventId }
-          : undefined,
+        headers: {
+          ...(opts?.lastEventId ? { "Last-Event-ID": opts.lastEventId } : {}),
+          ...(opts?.displaySnapshot ? { "X-Xpert-Display-Snapshot": "1" } : {}),
+        },
         params: {
           cancel_on_disconnect: opts?.cancelOnDisconnect ? "1" : "0",
           stream_mode: opts?.streamMode,
