@@ -42,6 +42,7 @@ export type {
   ThreadDisplayPause,
   ThreadPauseResult,
   ThreadCopyOptions,
+  ThreadCapabilities,
   ThreadGoal,
   ThreadGoalPatchRequest,
   ThreadGoalSetRequest,

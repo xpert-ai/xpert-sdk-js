@@ -36,6 +36,7 @@ import {
   ThreadStatus,
   ThreadPauseResult,
   ThreadCopyOptions,
+  ThreadCapabilities,
   Knowledgebase,
   ChatConversation,
   ConversationBranchRequest,
@@ -1057,6 +1058,11 @@ export class ThreadsClient<
       method: "POST",
       ...(options ? { json: options } : {}),
     });
+  }
+
+  /** Read action availability without starting or replaying a run. */
+  async getCapabilities(threadId: string): Promise<ThreadCapabilities> {
+    return this.fetch<ThreadCapabilities>(`/threads/${encodeURIComponent(threadId)}/capabilities`);
   }
 
   /**
