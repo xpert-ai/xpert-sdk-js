@@ -281,6 +281,10 @@ export type RequestHook = (
   init: RequestInit
 ) => Promise<RequestInit> | RequestInit;
 
+export interface ReadRequestOptions {
+  signal?: AbortSignal;
+}
+
 export interface ClientConfig {
   apiUrl?: string;
   apiKey?: string;
@@ -948,9 +952,10 @@ export class ThreadsClient<
    * @returns The thread.
    */
   async get<ValuesType = TStateType>(
-    threadId: string
+    threadId: string,
+    options?: ReadRequestOptions
   ): Promise<Thread<ValuesType>> {
-    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`);
+    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`, { signal: options?.signal });
   }
 
   /**
@@ -1672,8 +1677,8 @@ export class RunsClient<
    * @param runId The ID of the run.
    * @returns The run.
    */
-  async get(threadId: string, runId: string): Promise<Run> {
-    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`);
+  async get(threadId: string, runId: string, options?: ReadRequestOptions): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`, { signal: options?.signal });
   }
 
   /**
@@ -3313,8 +3318,8 @@ export class ConversationsClient extends BaseClient {
     });
   }
 
-  async get(conversationId: string): Promise<ChatConversation> {
-    return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  async get(conversationId: string, options?: ReadRequestOptions): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations/${conversationId}`, { signal: options?.signal });
   }
 
   /** List the existing history branches of a conversation. */
@@ -3513,11 +3518,13 @@ export class ConversationsClient extends BaseClient {
       order?: Record<string, "ASC" | "DESC">;
       limit?: number;
       offset?: number;
-    }
+    },
+    options?: ReadRequestOptions
   ): Promise<Pagination<ChatMessage>> {
     return this.fetch<Pagination<ChatMessage>>(
       `/conversations/${conversationId}/messages/search`,
       {
+        signal: options?.signal,
         method: "POST",
         json: {
           where: query?.where,

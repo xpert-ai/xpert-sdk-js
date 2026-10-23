@@ -6,7 +6,8 @@ export {
   XpertsClient,
   getApiKey,
 } from "./client.js";
-export type { ClientConfig, RequestHook } from "./client.js";
+export { HTTPError } from "./utils/async_caller.js";
+export type { ClientConfig, RequestHook, ReadRequestOptions } from "./client.js";
 export { McpClient, McpAppsClient, McpPublicationsClient } from "./mcp/index.js";
 export type * from "./mcp/types.js";
 export { McpAppSessionError, isMcpAppSessionError } from "./mcp/session-error.js";
