@@ -1,3 +1,4 @@
+import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
@@ -2184,6 +2185,7 @@ export class Client<
   public sandbox: SandboxClient;
 
   public workbench: WorkbenchClient;
+  public content: ContentClient;
   public groups: GroupsClient;
 
   /**
@@ -2239,6 +2241,7 @@ export class Client<
     client.groups = this.groups;
     // Native resources use the original authenticated API; only Views use the group namespace.
     client.workbench = this.workbench;
+    client.content = this.content;
     client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
     return client;
   }
@@ -2282,6 +2285,7 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
+    this.content = new ContentClient(new WorkbenchTransportClient(config));
     this.groups = new GroupsClient(new GroupsTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
