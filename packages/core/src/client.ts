@@ -36,6 +36,7 @@ import {
   ThreadStatus,
   ThreadPauseResult,
   ThreadCopyOptions,
+  ThreadCapabilities,
   Knowledgebase,
   ChatConversation,
   ConversationBranchRequest,
@@ -279,6 +280,10 @@ export type RequestHook = (
   url: URL,
   init: RequestInit
 ) => Promise<RequestInit> | RequestInit;
+
+export interface ReadRequestOptions {
+  signal?: AbortSignal;
+}
 
 export interface ClientConfig {
   apiUrl?: string;
@@ -947,9 +952,10 @@ export class ThreadsClient<
    * @returns The thread.
    */
   async get<ValuesType = TStateType>(
-    threadId: string
+    threadId: string,
+    options?: ReadRequestOptions
   ): Promise<Thread<ValuesType>> {
-    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`);
+    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`, { signal: options?.signal });
   }
 
   /**
@@ -1057,6 +1063,11 @@ export class ThreadsClient<
       method: "POST",
       ...(options ? { json: options } : {}),
     });
+  }
+
+  /** Read action availability without starting or replaying a run. */
+  async getCapabilities(threadId: string): Promise<ThreadCapabilities> {
+    return this.fetch<ThreadCapabilities>(`/threads/${encodeURIComponent(threadId)}/capabilities`);
   }
 
   /**
@@ -1666,8 +1677,8 @@ export class RunsClient<
    * @param runId The ID of the run.
    * @returns The run.
    */
-  async get(threadId: string, runId: string): Promise<Run> {
-    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`);
+  async get(threadId: string, runId: string, options?: ReadRequestOptions): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`, { signal: options?.signal });
   }
 
   /** Read lifecycle and business outcome only; presentation and history remain on get(). */
@@ -1783,6 +1794,8 @@ export class RunsClient<
           signal?: AbortSignal;
           cancelOnDisconnect?: boolean;
           lastEventId?: string;
+          /** Restore display state when the retained event prefix has been trimmed. */
+          displaySnapshot?: boolean;
           streamMode?: StreamMode | StreamMode[];
         }
       | AbortSignal
@@ -1803,9 +1816,10 @@ export class RunsClient<
         method: "GET",
         timeoutMs: null,
         signal: opts?.signal,
-        headers: opts?.lastEventId
-          ? { "Last-Event-ID": opts.lastEventId }
-          : undefined,
+        headers: {
+          ...(opts?.lastEventId ? { "Last-Event-ID": opts.lastEventId } : {}),
+          ...(opts?.displaySnapshot ? { "X-Xpert-Display-Snapshot": "1" } : {}),
+        },
         params: {
           cancel_on_disconnect: opts?.cancelOnDisconnect ? "1" : "0",
           stream_mode: opts?.streamMode,
@@ -3309,8 +3323,8 @@ export class ConversationsClient extends BaseClient {
     });
   }
 
-  async get(conversationId: string): Promise<ChatConversation> {
-    return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  async get(conversationId: string, options?: ReadRequestOptions): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations/${conversationId}`, { signal: options?.signal });
   }
 
   /** List the existing history branches of a conversation. */
@@ -3509,11 +3523,13 @@ export class ConversationsClient extends BaseClient {
       order?: Record<string, "ASC" | "DESC">;
       limit?: number;
       offset?: number;
-    }
+    },
+    options?: ReadRequestOptions
   ): Promise<Pagination<ChatMessage>> {
     return this.fetch<Pagination<ChatMessage>>(
       `/conversations/${conversationId}/messages/search`,
       {
+        signal: options?.signal,
         method: "POST",
         json: {
           where: query?.where,

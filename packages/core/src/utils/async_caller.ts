@@ -57,18 +57,26 @@ function isResponse(x: unknown): x is Response {
 /**
  * Utility error to properly handle failed requests
  */
-class HTTPError extends Error {
+export class HTTPError extends Error {
+  readonly retryAfterMs?: number;
   status: number;
 
   text: string;
 
   response?: Response;
 
-  constructor(status: number, message: string, response?: Response) {
+  constructor(status: number, message: string, response?: Response, includeResponse = true) {
     super(`HTTP ${status}: ${message}`);
     this.status = status;
     this.text = message;
-    this.response = response;
+    this.response = includeResponse ? response : undefined;
+    const retryAfter = response?.headers.get("Retry-After");
+    if (retryAfter) {
+      const duration = /^\d+(\.\d+)?$/.test(retryAfter)
+        ? Number(retryAfter) * 1000
+        : Date.parse(retryAfter) - Date.now();
+      if (Number.isFinite(duration)) this.retryAfterMs = Math.max(0, duration);
+    }
   }
 
   static async fromResponse(
@@ -79,13 +87,15 @@ class HTTPError extends Error {
       return new HTTPError(
         response.status,
         await response.text(),
-        options?.includeResponse ? response : undefined
+        response,
+        options?.includeResponse === true
       );
     } catch {
       return new HTTPError(
         response.status,
         response.statusText,
-        options?.includeResponse ? response : undefined
+        response,
+        options?.includeResponse === true
       );
     }
   }

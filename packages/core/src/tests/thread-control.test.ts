@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { Client } from '../index.js';
 
 describe('thread run control', () => {
+  it.each([true, false])('reads retry availability (%s) without submitting a run', async (canRetry) => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async () =>
+      new Response(JSON.stringify({ canRetry })));
+    const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch } });
+    expect(await client.threads.getCapabilities('branch/id')).toEqual({ canRetry });
+    expect(fetch.mock.calls.map(([url, init]) => [(url as URL).pathname, init?.method ?? 'GET', init?.body])).toEqual([
+      ['/api/ai/threads/branch%2Fid/capabilities', 'GET', undefined],
+    ]);
+  });
   it('keeps the sealed side-chat mode and retry key in the copy request', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()

@@ -1,5 +1,27 @@
 # @xpert-ai/xpert-sdk
 
+## 0.16.0
+
+### Minor Changes
+
+- 132cd0d: Add typed recovery controls for chat clients:
+  - Expose `threads.getCapabilities()` and `ThreadCapabilities` so clients can check retry availability without starting or replaying a run.
+  - Add the opt-in `displaySnapshot` option to `runs.joinStream()` to restore display state when the retained event prefix has been trimmed.
+  - Export `ReadRequestOptions` and accept abort signals for thread, run, conversation, and message-history reads.
+  - Export `HTTPError` with `retryAfterMs` derived from the server's `Retry-After` header so clients can respect recovery retry timing.
+
+  Existing calls remain compatible, and display snapshot recovery stays disabled unless explicitly requested.
+
+## 0.15.0
+
+### Minor Changes
+
+- 4453d2c: Add typed latest-sealed-reply thread copies with stable request IDs, preserving the historical-input edit contract and existing copy transport.
+
+### Patch Changes
+
+- f9d178c: Preserve the original authenticated native Workbench transport in group clients so conversation file requests use `/api/ai/conversations/:id/workspace/*`. Keep View requests on their group-scoped routes.
+
 ## 0.14.0
 
 ### Minor Changes

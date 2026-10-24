@@ -78,6 +78,11 @@ export type ConversationBranchRequest = {
   requestId: string;
 };
 
+/** Action availability for chat clients. Recovery diagnostics remain on the server. */
+export type ThreadCapabilities = {
+  canRetry: boolean;
+};
+
 export type ConversationBranchSource = {
   conversationId: string;
   threadId: string;
