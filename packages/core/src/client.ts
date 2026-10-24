@@ -1670,6 +1670,11 @@ export class RunsClient<
     return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`);
   }
 
+  /** Read lifecycle and business outcome only; presentation and history remain on get(). */
+  async getStatus(threadId: string, runId: string): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}/status`);
+  }
+
   /**
    * Cancel a run.
    *
