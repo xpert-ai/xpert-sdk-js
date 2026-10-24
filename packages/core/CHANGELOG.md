@@ -1,5 +1,14 @@
 # @xpert-ai/xpert-sdk
 
+## 0.17.0
+
+### Minor Changes
+
+- 39fd3e8: Add `client.runs.getStatus(threadId, runId)` for compact lifecycle and business-outcome polling. Keep `client.runs.get()` unchanged for callers that need the full run response. The new method requires a server exposing the run-status endpoint.
+- 6c96008: Add `Client.content` with typed editor resolution, document review, revision preview, and review mutations scoped to an Assistant and Project. Requests reuse the SDK transport, authentication hooks, and cancellation signals, including in group clients.
+
+  Expose content document, revision, proposal, and comment types, and add the optional `required` flag to Remote View client command declarations so hosts can check compatibility before mounting a view.
+
 ## 0.16.0
 
 ### Minor Changes
