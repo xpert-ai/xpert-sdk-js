@@ -1,5 +1,17 @@
 # @xpert-ai/xpert-sdk
 
+## 0.18.0
+
+### Minor Changes
+
+- 74eb98e: Add authenticated View image preview reads with thumbnail and original variants. Preserve request hooks, runtime scope, cancellation, group routing and binary response validation without creating a file grant session.
+- 2d9bed1: Add validated public thread control views, abortable reads and monotonic revision merging for recovery UI.
+
+### Patch Changes
+
+- 2d9bed1: Expose the optional event cursor on messages-tuple and custom stream events, matching the runtime shape and allowing packed consumers to read cursors across every stream mode.
+- 2d9bed1: Ship the JSON Schema type dependency and preserve the subgraph stream types referenced by public declarations, so a clean package consumer can type-check without skipLibCheck or workspace-only dependencies.
+
 ## 0.17.0
 
 ### Minor Changes
