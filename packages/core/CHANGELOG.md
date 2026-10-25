@@ -1,5 +1,26 @@
 # @xpert-ai/xpert-sdk
 
+## 0.17.0
+
+### Minor Changes
+
+- 39fd3e8: Add `client.runs.getStatus(threadId, runId)` for compact lifecycle and business-outcome polling. Keep `client.runs.get()` unchanged for callers that need the full run response. The new method requires a server exposing the run-status endpoint.
+- 6c96008: Add `Client.content` with typed editor resolution, document review, revision preview, and review mutations scoped to an Assistant and Project. Requests reuse the SDK transport, authentication hooks, and cancellation signals, including in group clients.
+
+  Expose content document, revision, proposal, and comment types, and add the optional `required` flag to Remote View client command declarations so hosts can check compatibility before mounting a view.
+
+## 0.16.0
+
+### Minor Changes
+
+- 132cd0d: Add typed recovery controls for chat clients:
+  - Expose `threads.getCapabilities()` and `ThreadCapabilities` so clients can check retry availability without starting or replaying a run.
+  - Add the opt-in `displaySnapshot` option to `runs.joinStream()` to restore display state when the retained event prefix has been trimmed.
+  - Export `ReadRequestOptions` and accept abort signals for thread, run, conversation, and message-history reads.
+  - Export `HTTPError` with `retryAfterMs` derived from the server's `Retry-After` header so clients can respect recovery retry timing.
+
+  Existing calls remain compatible, and display snapshot recovery stays disabled unless explicitly requested.
+
 ## 0.15.0
 
 ### Minor Changes

@@ -1,7 +1,9 @@
 import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
+import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
+import { readViewFilePreviewResponse, type XpertViewFilePreviewRequest, type XpertViewFilePreviewResult } from './view-file-preview.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -1689,6 +1691,11 @@ export class RunsClient<
     return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`, { signal: options?.signal });
   }
 
+  /** Read lifecycle and business outcome only; presentation and history remain on get(). */
+  async getStatus(threadId: string, runId: string): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}/status`);
+  }
+
   /**
    * Cancel a run.
    *
@@ -2192,6 +2199,7 @@ export class Client<
   public sandbox: SandboxClient;
 
   public workbench: WorkbenchClient;
+  public content: ContentClient;
   public groups: GroupsClient;
 
   /**
@@ -2247,6 +2255,7 @@ export class Client<
     client.groups = this.groups;
     // Native resources use the original authenticated API; only Views use the group namespace.
     client.workbench = this.workbench;
+    client.content = this.content;
     client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
     return client;
   }
@@ -2290,6 +2299,7 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
+    this.content = new ContentClient(new WorkbenchTransportClient(config));
     this.groups = new GroupsClient(new GroupsTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
@@ -3001,6 +3011,25 @@ function createViewFile(input: XpertViewFileActionRequest): {
 class WorkspaceViewFilesClient extends BaseClient {
   constructor(config?: ClientConfig, private readonly contentApiUrl?: string) { super(config); }
 
+  async readPreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    const [url, init] = this.prepareFetchOptions("/workspace-files/view-sessions/preview", {
+      method: "POST",
+      json: { hostType, hostId, viewKey, ...request, runtimeScope: options?.runtimeScope },
+      headers: createViewRuntimeHeaders(options?.runtimeScope),
+      credentials: "omit",
+      redirect: "error",
+      signal: options?.signal,
+    });
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    return readViewFilePreviewResponse(await this.asyncCaller.fetch(url, finalInit));
+  }
+
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
     hostType: XpertViewHostType,
@@ -3256,6 +3285,17 @@ export class ViewHostsClient extends BaseClient {
       viewKey,
       options
     );
+  }
+
+  /** Read an authorized image directly; thumbnails do not download the original file. */
+  readFilePreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    return this.workspaceFiles.readPreview(hostType, hostId, viewKey, request, options);
   }
 
   createFileAccessGrant(
