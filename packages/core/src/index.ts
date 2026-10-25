@@ -323,3 +323,5 @@ export type { ThreadActivitySnapshot } from './thread-activity.js';
 export { GroupsClient } from './groups.js';
 export type { GroupRequestOptions } from './groups.js';
 export type * from './group-types.js';
+
+export * from './thread-control-view.js';

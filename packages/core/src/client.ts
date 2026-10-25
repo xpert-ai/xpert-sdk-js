@@ -1,3 +1,4 @@
+import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
@@ -1063,6 +1064,13 @@ export class ThreadsClient<
       method: "POST",
       ...(options ? { json: options } : {}),
     });
+  }
+
+  /** Read one authorized, versioned state/action snapshot without starting work. */
+  async getControlView(threadId: string, options?: ReadRequestOptions): Promise<ThreadControlView> {
+    const value = await this.fetch<unknown>(`/threads/${encodeURIComponent(threadId)}/control-view`, { signal: options?.signal });
+    if (!isThreadControlView(value) || value.threadId !== threadId) throw new Error('Invalid thread control view');
+    return value;
   }
 
   /** Read action availability without starting or replaying a run. */
@@ -3323,9 +3331,10 @@ export class ConversationsClient extends BaseClient {
   }
 
   /** List the existing history branches of a conversation. */
-  async listThreads(conversationId: string): Promise<Thread[]> {
+  async listThreads(conversationId: string, options?: ReadRequestOptions): Promise<Thread[]> {
     return this.fetch(
-      `/conversations/${encodeURIComponent(conversationId)}/threads`
+      `/conversations/${encodeURIComponent(conversationId)}/threads`,
+      { signal: options?.signal }
     );
   }
 

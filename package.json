@@ -24,7 +24,8 @@
     "bump-version": "changeset version && pnpm -F @xpert-ai/* prebuild",
     "prepare": "husky",
     "clear:deps": "rm -rf node_modules && pnpm -r exec rm -rf node_modules",
-    "examples:basic": "pnpm -F basic-example start"
+    "examples:basic": "pnpm -F basic-example start",
+    "test:package": "node scripts/test-package.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
