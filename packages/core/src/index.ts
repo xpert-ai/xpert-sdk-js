@@ -7,6 +7,7 @@ export {
   getApiKey,
 } from "./client.js";
 export { HTTPError } from "./utils/async_caller.js";
+export type { XpertViewFilePreviewRequest, XpertViewFilePreviewResult } from "./view-file-preview.js";
 export type { ClientConfig, RequestHook, ReadRequestOptions } from "./client.js";
 export { McpClient, McpAppsClient, McpPublicationsClient } from "./mcp/index.js";
 export type * from "./mcp/types.js";

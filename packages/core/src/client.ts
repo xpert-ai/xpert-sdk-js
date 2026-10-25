@@ -2,6 +2,7 @@ import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
+import { readViewFilePreviewResponse, type XpertViewFilePreviewRequest, type XpertViewFilePreviewResult } from './view-file-preview.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -3002,6 +3003,25 @@ function createViewFile(input: XpertViewFileActionRequest): {
 class WorkspaceViewFilesClient extends BaseClient {
   constructor(config?: ClientConfig, private readonly contentApiUrl?: string) { super(config); }
 
+  async readPreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    const [url, init] = this.prepareFetchOptions("/workspace-files/view-sessions/preview", {
+      method: "POST",
+      json: { hostType, hostId, viewKey, ...request, runtimeScope: options?.runtimeScope },
+      headers: createViewRuntimeHeaders(options?.runtimeScope),
+      credentials: "omit",
+      redirect: "error",
+      signal: options?.signal,
+    });
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    return readViewFilePreviewResponse(await this.asyncCaller.fetch(url, finalInit));
+  }
+
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
     hostType: XpertViewHostType,
@@ -3257,6 +3277,17 @@ export class ViewHostsClient extends BaseClient {
       viewKey,
       options
     );
+  }
+
+  /** Read an authorized image directly; thumbnails do not download the original file. */
+  readFilePreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    return this.workspaceFiles.readPreview(hostType, hostId, viewKey, request, options);
   }
 
   createFileAccessGrant(
