@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.19.0
+
+### Minor Changes
+
+- 910ac42: Support explicit editor selection and provider-native selection IDs when resolving catalog resources. Keep content navigation behind the authenticated SDK transport.
+
 ## 0.18.0
 
 ### Minor Changes
