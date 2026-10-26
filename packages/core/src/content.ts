@@ -2,9 +2,11 @@ import type { WorkbenchTransport, WorkbenchRequestOptions } from './workbench.js
 
 /** Trusted Assistant/Project scope; resource providers still authorize each operation. */
 export type ContentScope = { assistantId: string; projectId: string };
-export type ContentResource = { resourceId: string; providerKey?: string };
+export type ContentResource = { resourceId: string; providerKey?: string; editorKey?: string };
 export type ContentEditorResolution = {
   viewKey: string;
+  /** A catalog identity may resolve to a different provider-owned selection. */
+  selectionId?: string;
   parameters?: { contentProvider: string };
 };
 /** A file-backed editor resource has one identity across paths, Assistants and Views. */
@@ -111,7 +113,10 @@ export class ContentClient {
       scope,
       resource.resourceId,
       'open',
-      resource.providerKey ? { providerKey: resource.providerKey } : {},
+      {
+        ...(resource.providerKey ? { providerKey: resource.providerKey } : {}),
+        ...(resource.editorKey ? { editorKey: resource.editorKey } : {}),
+      },
       options
     );
   }
