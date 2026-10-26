@@ -1,9 +1,11 @@
+import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import type { TMessageContentResourceCard } from './resource-card.js';
 
 /** Complete discovery snapshot. Reconnect replaces discovery state; tokens use runs.joinStream. */
 export interface ThreadActivitySnapshot {
   version: 1;
   threadId: string;
+  controlView?: ThreadControlView;
   runs: Array<{ id: string; status: string; updatedAt: string; createdAt: string; messageRevision: string }>;
   cards: TMessageContentResourceCard[];
 }
@@ -13,6 +15,7 @@ export function isThreadActivitySnapshot(value: unknown): value is ThreadActivit
       !('threadId' in value) || typeof value.threadId !== 'string' ||
       !('runs' in value) || !Array.isArray(value.runs) ||
       !('cards' in value) || !Array.isArray(value.cards)) return false;
+  if ('controlView' in value && value.controlView !== undefined && !isThreadControlView(value.controlView)) return false;
   // Card payloads use the shared resource-card parser at the rendering boundary.
   return value.runs.every((run: unknown) => !!run && typeof run === 'object' &&
     'id' in run && typeof run.id === 'string' &&

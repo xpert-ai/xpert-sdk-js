@@ -1,3 +1,4 @@
+import type { ThreadControlView } from './thread-control-view.js';
 import type { JSONSchema7 } from "json-schema";
 import type { RuntimeResourceSkillReference, RuntimeResourcesSelection } from "./runtime-resources.js";
 import type {
@@ -50,7 +51,7 @@ export type ThreadPauseResult = ThreadRunControl;
 
 export type ThreadRunControl = {
   executionId: string;
-  state: "running" | "pausing" | "paused";
+  state: "running" | "pausing" | "paused" | "terminating" | "settling" | "input_wait";
   pauseId?: string;
   graphRevision?: string;
   checkpoint?: { threadId: string; checkpointNs: string; checkpointId: string };
@@ -80,6 +81,7 @@ export type ConversationBranchRequest = {
 
 /** Action availability for chat clients. Recovery diagnostics remain on the server. */
 export type ThreadCapabilities = {
+  controlView?: ThreadControlView;
   canRetry: boolean;
 };
 
@@ -313,6 +315,7 @@ export interface Thread<ValuesType = DefaultValues> {
   /** The status of the thread */
   status: ThreadStatus;
   runControl?: ThreadRunControl | null;
+  controlView?: ThreadControlView;
   displayPause?: ThreadDisplayPause | null;
   operation?: ChatConversation["operation"] | null;
 
@@ -412,6 +415,8 @@ export interface ThreadTask {
 }
 
 export interface Run {
+  /** Current thread controls; runId identifies the active execution independently of this historical run. */
+  controlView?: ThreadControlView;
   /** The ID of the run */
   run_id: string;
 

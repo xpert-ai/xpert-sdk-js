@@ -1,7 +1,9 @@
+import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
+import { readViewFilePreviewResponse, type XpertViewFilePreviewRequest, type XpertViewFilePreviewResult } from './view-file-preview.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -1064,6 +1066,13 @@ export class ThreadsClient<
       method: "POST",
       ...(options ? { json: options } : {}),
     });
+  }
+
+  /** Read one authorized, versioned state/action snapshot without starting work. */
+  async getControlView(threadId: string, options?: ReadRequestOptions): Promise<ThreadControlView> {
+    const value = await this.fetch<unknown>(`/threads/${encodeURIComponent(threadId)}/control-view`, { signal: options?.signal });
+    if (!isThreadControlView(value) || value.threadId !== threadId) throw new Error('Invalid thread control view');
+    return value;
   }
 
   /** Read action availability without starting or replaying a run. */
@@ -3002,6 +3011,25 @@ function createViewFile(input: XpertViewFileActionRequest): {
 class WorkspaceViewFilesClient extends BaseClient {
   constructor(config?: ClientConfig, private readonly contentApiUrl?: string) { super(config); }
 
+  async readPreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    const [url, init] = this.prepareFetchOptions("/workspace-files/view-sessions/preview", {
+      method: "POST",
+      json: { hostType, hostId, viewKey, ...request, runtimeScope: options?.runtimeScope },
+      headers: createViewRuntimeHeaders(options?.runtimeScope),
+      credentials: "omit",
+      redirect: "error",
+      signal: options?.signal,
+    });
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    return readViewFilePreviewResponse(await this.asyncCaller.fetch(url, finalInit));
+  }
+
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
     hostType: XpertViewHostType,
@@ -3259,6 +3287,17 @@ export class ViewHostsClient extends BaseClient {
     );
   }
 
+  /** Read an authorized image directly; thumbnails do not download the original file. */
+  readFilePreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    return this.workspaceFiles.readPreview(hostType, hostId, viewKey, request, options);
+  }
+
   createFileAccessGrant(
     sessionId: string,
     request: XpertViewFileAccessRequest,
@@ -3332,9 +3371,10 @@ export class ConversationsClient extends BaseClient {
   }
 
   /** List the existing history branches of a conversation. */
-  async listThreads(conversationId: string): Promise<Thread[]> {
+  async listThreads(conversationId: string, options?: ReadRequestOptions): Promise<Thread[]> {
     return this.fetch(
-      `/conversations/${encodeURIComponent(conversationId)}/threads`
+      `/conversations/${encodeURIComponent(conversationId)}/threads`,
+      { signal: options?.signal }
     );
   }
 

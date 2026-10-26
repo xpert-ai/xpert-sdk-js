@@ -1,5 +1,26 @@
 # @xpert-ai/xpert-sdk
 
+## 0.18.0
+
+### Minor Changes
+
+- 74eb98e: Add authenticated View image preview reads with thumbnail and original variants. Preserve request hooks, runtime scope, cancellation, group routing and binary response validation without creating a file grant session.
+- 2d9bed1: Add validated public thread control views, abortable reads and monotonic revision merging for recovery UI.
+
+### Patch Changes
+
+- 2d9bed1: Expose the optional event cursor on messages-tuple and custom stream events, matching the runtime shape and allowing packed consumers to read cursors across every stream mode.
+- 2d9bed1: Ship the JSON Schema type dependency and preserve the subgraph stream types referenced by public declarations, so a clean package consumer can type-check without skipLibCheck or workspace-only dependencies.
+
+## 0.17.0
+
+### Minor Changes
+
+- 39fd3e8: Add `client.runs.getStatus(threadId, runId)` for compact lifecycle and business-outcome polling. Keep `client.runs.get()` unchanged for callers that need the full run response. The new method requires a server exposing the run-status endpoint.
+- 6c96008: Add `Client.content` with typed editor resolution, document review, revision preview, and review mutations scoped to an Assistant and Project. Requests reuse the SDK transport, authentication hooks, and cancellation signals, including in group clients.
+
+  Expose content document, revision, proposal, and comment types, and add the optional `required` flag to Remote View client command declarations so hosts can check compatibility before mounting a view.
+
 ## 0.16.0
 
 ### Minor Changes
