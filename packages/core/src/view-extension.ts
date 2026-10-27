@@ -1,4 +1,4 @@
-import type { IconDefinition } from "./schema.js";
+import type { IconDefinition, XpertProjectTypeRef } from "./schema.js";
 
 export type XpertViewHostType =
   | "integration"
@@ -190,6 +190,8 @@ export interface XpertViewActivation {
 }
 
 export interface XpertWorkbenchViewOptions {
+  /** Project type required by this View. UI recovery hint only; providers still enforce access. */
+  projectType?: XpertProjectTypeRef;
   /**
    * @deprecated Use the manifest's `visible` field for visibility and `openMode`
    * for initial tab behavior. Retained for compatibility; false hides the view.
