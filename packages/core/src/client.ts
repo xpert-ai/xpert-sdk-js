@@ -1,3 +1,13 @@
+import type {
+  ConversationShareCreate,
+  ConversationShareCreated,
+  ConversationShareInfo,
+  ConversationSharePreview,
+  ConversationShareListQuery,
+  ConversationShareList,
+  ConversationShareRevokeAll,
+  SharedConversation,
+} from './conversation-sharing.js';
 import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
@@ -3335,6 +3345,58 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** Personal management requires an interactive user session, never an Assistant client secret. */
+  async listMyShares(query?: ConversationShareListQuery): Promise<ConversationShareList> {
+    return this.fetch('/conversation-shares', { params: { ...query } });
+  }
+
+  async previewMyShare(id: string): Promise<SharedConversation> {
+    return this.fetch(`/conversation-shares/${encodeURIComponent(id)}`);
+  }
+
+  async revokeMyShare(id: string): Promise<void> {
+    return this.fetch(`/conversation-shares/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  async revokeAllMyShares(input: ConversationShareRevokeAll): Promise<{ revoked: number }> {
+    return this.fetch('/conversation-shares/revoke-all', { method: 'POST', json: input });
+  }
+
+  async previewShare(id: string, threadId: string): Promise<ConversationSharePreview> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/share-preview`, {
+      method: 'POST',
+      json: { threadId },
+    });
+  }
+
+  async createShare(id: string, input: ConversationShareCreate): Promise<ConversationShareCreated> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/shares`, {
+      method: 'POST',
+      json: input,
+    });
+  }
+
+  async listShares(id: string): Promise<ConversationShareInfo[]> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/shares`);
+  }
+
+  async revokeShare(id: string, shareId: string): Promise<void> {
+    return this.fetch(
+      `/conversations/${encodeURIComponent(id)}/shares/${encodeURIComponent(shareId)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async readShare(
+    token: string,
+    options?: { authenticated?: boolean; signal?: AbortSignal }
+  ): Promise<SharedConversation> {
+    return this.fetch(
+      `/shared-conversations/${encodeURIComponent(token)}${options?.authenticated ? '/authenticated' : ''}`,
+      { signal: options?.signal }
+    );
+  }
+
   /** Create an independent conversation through the selected assistant message, without starting a run. */
   async branch(conversationId: string, input: ConversationBranchRequest): Promise<ChatConversation> {
     return this.fetch(`/conversations/${encodeURIComponent(conversationId)}/branch`, {

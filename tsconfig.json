@@ -1,4 +1,6 @@
 {
+  // The package consumer is checked independently by `pnpm test:package` after installation.
+  "exclude": ["node_modules", "scripts/package-consumer"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
