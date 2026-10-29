@@ -42,4 +42,4 @@ jobs:
 
       - name: Publish to npm with trusted publishing
         if: steps.changesets.outputs.hasChangesets == 'false'
-        run: pnpm build && pnpm changeset publish
+        run: pnpm build && pnpm test:package && pnpm changeset publish

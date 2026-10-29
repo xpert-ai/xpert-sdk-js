@@ -1,6 +1,19 @@
+import type {
+  ConversationShareCreate,
+  ConversationShareCreated,
+  ConversationShareInfo,
+  ConversationSharePreview,
+  ConversationShareListQuery,
+  ConversationShareList,
+  ConversationShareRevokeAll,
+  SharedConversation,
+} from './conversation-sharing.js';
+import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
+import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
+import { readViewFilePreviewResponse, type XpertViewFilePreviewRequest, type XpertViewFilePreviewResult } from './view-file-preview.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
 import type { MessageFileChangeStats } from "./types.messages.js";
 import {
@@ -36,6 +49,7 @@ import {
   ThreadStatus,
   ThreadPauseResult,
   ThreadCopyOptions,
+  ThreadCapabilities,
   Knowledgebase,
   ChatConversation,
   ConversationBranchRequest,
@@ -56,6 +70,7 @@ import {
   ThreadGoalSetRequest,
   XpertProject,
   XpertProjectListOptions,
+  XpertProjectCreateInput,
   XpertProjectTypeRef,
   XpertProjectTypeCatalog,
   XpertProjectEntry,
@@ -78,6 +93,7 @@ import {
 import type {
   RuntimeResourceAuthorization,
   RuntimeResourceCatalog,
+  RuntimeResourceCommand,
   RuntimeResourceKind,
   RuntimeResourcesSelection,
 } from "./runtime-resources.js";
@@ -277,6 +293,10 @@ export type RequestHook = (
   url: URL,
   init: RequestInit
 ) => Promise<RequestInit> | RequestInit;
+
+export interface ReadRequestOptions {
+  signal?: AbortSignal;
+}
 
 export interface ClientConfig {
   apiUrl?: string;
@@ -667,6 +687,8 @@ export class AssistantsClient extends BaseClient {
       projectId?: string;
       search?: string;
       kind?: RuntimeResourceKind;
+      /** Include assistant-role packages only to restore existing selections. Defaults to browse. */
+      purpose?: 'browse' | 'selection';
       offset?: number;
       limit?: number;
       signal?: AbortSignal;
@@ -674,6 +696,19 @@ export class AssistantsClient extends BaseClient {
   ): Promise<RuntimeResourceCatalog> {
     const { signal, ...params } = options ?? {};
     return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources`, { params, signal });
+  }
+
+  /** Read command metadata from the exact selected plugin versions. */
+  async getResourceCommands(
+    assistantId: string,
+    selection: RuntimeResourcesSelection,
+    options?: { projectId?: string; signal?: AbortSignal }
+  ): Promise<RuntimeResourceCommand[]> {
+    return this.fetch(`/assistants/${encodeURIComponent(assistantId)}/resources/commands`, {
+      method: "POST",
+      json: { runtimeResources: selection, ...(options?.projectId ? { projectId: options.projectId } : {}) },
+      signal: options?.signal,
+    });
   }
 
   /**
@@ -930,9 +965,10 @@ export class ThreadsClient<
    * @returns The thread.
    */
   async get<ValuesType = TStateType>(
-    threadId: string
+    threadId: string,
+    options?: ReadRequestOptions
   ): Promise<Thread<ValuesType>> {
-    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`);
+    return this.fetch<Thread<ValuesType>>(`/threads/${threadId}`, { signal: options?.signal });
   }
 
   /**
@@ -1040,6 +1076,18 @@ export class ThreadsClient<
       method: "POST",
       ...(options ? { json: options } : {}),
     });
+  }
+
+  /** Read one authorized, versioned state/action snapshot without starting work. */
+  async getControlView(threadId: string, options?: ReadRequestOptions): Promise<ThreadControlView> {
+    const value = await this.fetch<unknown>(`/threads/${encodeURIComponent(threadId)}/control-view`, { signal: options?.signal });
+    if (!isThreadControlView(value) || value.threadId !== threadId) throw new Error('Invalid thread control view');
+    return value;
+  }
+
+  /** Read action availability without starting or replaying a run. */
+  async getCapabilities(threadId: string): Promise<ThreadCapabilities> {
+    return this.fetch<ThreadCapabilities>(`/threads/${encodeURIComponent(threadId)}/capabilities`);
   }
 
   /**
@@ -1649,8 +1697,13 @@ export class RunsClient<
    * @param runId The ID of the run.
    * @returns The run.
    */
-  async get(threadId: string, runId: string): Promise<Run> {
-    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`);
+  async get(threadId: string, runId: string, options?: ReadRequestOptions): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}`, { signal: options?.signal });
+  }
+
+  /** Read lifecycle and business outcome only; presentation and history remain on get(). */
+  async getStatus(threadId: string, runId: string): Promise<Run> {
+    return this.fetch<Run>(`/threads/${threadId}/runs/${runId}/status`);
   }
 
   /**
@@ -1761,6 +1814,8 @@ export class RunsClient<
           signal?: AbortSignal;
           cancelOnDisconnect?: boolean;
           lastEventId?: string;
+          /** Restore display state when the retained event prefix has been trimmed. */
+          displaySnapshot?: boolean;
           streamMode?: StreamMode | StreamMode[];
         }
       | AbortSignal
@@ -1781,9 +1836,10 @@ export class RunsClient<
         method: "GET",
         timeoutMs: null,
         signal: opts?.signal,
-        headers: opts?.lastEventId
-          ? { "Last-Event-ID": opts.lastEventId }
-          : undefined,
+        headers: {
+          ...(opts?.lastEventId ? { "Last-Event-ID": opts.lastEventId } : {}),
+          ...(opts?.displaySnapshot ? { "X-Xpert-Display-Snapshot": "1" } : {}),
+        },
         params: {
           cancel_on_disconnect: opts?.cancelOnDisconnect ? "1" : "0",
           stream_mode: opts?.streamMode,
@@ -2153,6 +2209,7 @@ export class Client<
   public sandbox: SandboxClient;
 
   public workbench: WorkbenchClient;
+  public content: ContentClient;
   public groups: GroupsClient;
 
   /**
@@ -2208,6 +2265,7 @@ export class Client<
     client.groups = this.groups;
     // Native resources use the original authenticated API; only Views use the group namespace.
     client.workbench = this.workbench;
+    client.content = this.content;
     client.viewHosts = new ViewHostsClient({ ...this.config, apiUrl: client.config.apiUrl }, this.config.apiUrl);
     return client;
   }
@@ -2251,6 +2309,7 @@ export class Client<
     this.conversations = new ConversationsClient(config);
     this.sandbox = new SandboxClient(config);
     this.workbench = new WorkbenchClient(new WorkbenchTransportClient(config));
+    this.content = new ContentClient(new WorkbenchTransportClient(config));
     this.groups = new GroupsClient(new GroupsTransportClient(config));
     this.viewHosts = new ViewHostsClient(config);
     this.projects = new ProjectsClient(config);
@@ -2301,6 +2360,18 @@ export class ProjectsClient extends BaseClient {
         skip: options.skip ?? 0,
         take: options.take ?? 100,
       },
+      signal: options.signal,
+    });
+  }
+
+  /** Create a Project using the current interactive user's permissions. */
+  async create(
+    input: XpertProjectCreateInput,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<XpertProject> {
+    return this.fetch<XpertProject>("", {
+      method: "POST",
+      json: input,
       signal: options.signal,
     });
   }
@@ -2950,6 +3021,25 @@ function createViewFile(input: XpertViewFileActionRequest): {
 class WorkspaceViewFilesClient extends BaseClient {
   constructor(config?: ClientConfig, private readonly contentApiUrl?: string) { super(config); }
 
+  async readPreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    const [url, init] = this.prepareFetchOptions("/workspace-files/view-sessions/preview", {
+      method: "POST",
+      json: { hostType, hostId, viewKey, ...request, runtimeScope: options?.runtimeScope },
+      headers: createViewRuntimeHeaders(options?.runtimeScope),
+      credentials: "omit",
+      redirect: "error",
+      signal: options?.signal,
+    });
+    const finalInit = this.onRequest ? await this.onRequest(url, init) : init;
+    return readViewFilePreviewResponse(await this.asyncCaller.fetch(url, finalInit));
+  }
+
   /** Create a cookie-backed access session for the view and its runtime scope. */
   createSession(
     hostType: XpertViewHostType,
@@ -3207,6 +3297,17 @@ export class ViewHostsClient extends BaseClient {
     );
   }
 
+  /** Read an authorized image directly; thumbnails do not download the original file. */
+  readFilePreview(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    request: XpertViewFilePreviewRequest,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewFilePreviewResult> {
+    return this.workspaceFiles.readPreview(hostType, hostId, viewKey, request, options);
+  }
+
   createFileAccessGrant(
     sessionId: string,
     request: XpertViewFileAccessRequest,
@@ -3244,6 +3345,58 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** Personal management requires an interactive user session, never an Assistant client secret. */
+  async listMyShares(query?: ConversationShareListQuery): Promise<ConversationShareList> {
+    return this.fetch('/conversation-shares', { params: { ...query } });
+  }
+
+  async previewMyShare(id: string): Promise<SharedConversation> {
+    return this.fetch(`/conversation-shares/${encodeURIComponent(id)}`);
+  }
+
+  async revokeMyShare(id: string): Promise<void> {
+    return this.fetch(`/conversation-shares/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  async revokeAllMyShares(input: ConversationShareRevokeAll): Promise<{ revoked: number }> {
+    return this.fetch('/conversation-shares/revoke-all', { method: 'POST', json: input });
+  }
+
+  async previewShare(id: string, threadId: string): Promise<ConversationSharePreview> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/share-preview`, {
+      method: 'POST',
+      json: { threadId },
+    });
+  }
+
+  async createShare(id: string, input: ConversationShareCreate): Promise<ConversationShareCreated> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/shares`, {
+      method: 'POST',
+      json: input,
+    });
+  }
+
+  async listShares(id: string): Promise<ConversationShareInfo[]> {
+    return this.fetch(`/conversations/${encodeURIComponent(id)}/shares`);
+  }
+
+  async revokeShare(id: string, shareId: string): Promise<void> {
+    return this.fetch(
+      `/conversations/${encodeURIComponent(id)}/shares/${encodeURIComponent(shareId)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async readShare(
+    token: string,
+    options?: { authenticated?: boolean; signal?: AbortSignal }
+  ): Promise<SharedConversation> {
+    return this.fetch(
+      `/shared-conversations/${encodeURIComponent(token)}${options?.authenticated ? '/authenticated' : ''}`,
+      { signal: options?.signal }
+    );
+  }
+
   /** Create an independent conversation through the selected assistant message, without starting a run. */
   async branch(conversationId: string, input: ConversationBranchRequest): Promise<ChatConversation> {
     return this.fetch(`/conversations/${encodeURIComponent(conversationId)}/branch`, {
@@ -3275,14 +3428,15 @@ export class ConversationsClient extends BaseClient {
     });
   }
 
-  async get(conversationId: string): Promise<ChatConversation> {
-    return this.fetch<ChatConversation>(`/conversations/${conversationId}`);
+  async get(conversationId: string, options?: ReadRequestOptions): Promise<ChatConversation> {
+    return this.fetch<ChatConversation>(`/conversations/${conversationId}`, { signal: options?.signal });
   }
 
   /** List the existing history branches of a conversation. */
-  async listThreads(conversationId: string): Promise<Thread[]> {
+  async listThreads(conversationId: string, options?: ReadRequestOptions): Promise<Thread[]> {
     return this.fetch(
-      `/conversations/${encodeURIComponent(conversationId)}/threads`
+      `/conversations/${encodeURIComponent(conversationId)}/threads`,
+      { signal: options?.signal }
     );
   }
 
@@ -3475,11 +3629,13 @@ export class ConversationsClient extends BaseClient {
       order?: Record<string, "ASC" | "DESC">;
       limit?: number;
       offset?: number;
-    }
+    },
+    options?: ReadRequestOptions
   ): Promise<Pagination<ChatMessage>> {
     return this.fetch<Pagination<ChatMessage>>(
       `/conversations/${conversationId}/messages/search`,
       {
+        signal: options?.signal,
         method: "POST",
         json: {
           where: query?.where,

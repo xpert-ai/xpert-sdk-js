@@ -1,5 +1,120 @@
 # @xpert-ai/xpert-sdk
 
+## 0.20.0
+
+### Minor Changes
+
+- eff99f2: Add typed conversation share preview, create, list, revoke, and read methods. Sharing uses independent snapshots with organization or explicit public audiences.
+
+  Add interactive-user management methods for searching personal shares, reading owned snapshots, and revoking individual or all shares through a server-reviewed cutoff.
+
+  Expose owner-only persisted share URLs for reopening and copying without replacement. Personal management supports listing, previewing and revoking existing links.
+
+## 0.19.0
+
+### Minor Changes
+
+- 910ac42: Support explicit editor selection and provider-native selection IDs when resolving catalog resources. Keep content navigation behind the authenticated SDK transport.
+
+## 0.18.0
+
+### Minor Changes
+
+- 74eb98e: Add authenticated View image preview reads with thumbnail and original variants. Preserve request hooks, runtime scope, cancellation, group routing and binary response validation without creating a file grant session.
+- 2d9bed1: Add validated public thread control views, abortable reads and monotonic revision merging for recovery UI.
+
+### Patch Changes
+
+- 2d9bed1: Expose the optional event cursor on messages-tuple and custom stream events, matching the runtime shape and allowing packed consumers to read cursors across every stream mode.
+- 2d9bed1: Ship the JSON Schema type dependency and preserve the subgraph stream types referenced by public declarations, so a clean package consumer can type-check without skipLibCheck or workspace-only dependencies.
+
+## 0.17.0
+
+### Minor Changes
+
+- 39fd3e8: Add `client.runs.getStatus(threadId, runId)` for compact lifecycle and business-outcome polling. Keep `client.runs.get()` unchanged for callers that need the full run response. The new method requires a server exposing the run-status endpoint.
+- 6c96008: Add `Client.content` with typed editor resolution, document review, revision preview, and review mutations scoped to an Assistant and Project. Requests reuse the SDK transport, authentication hooks, and cancellation signals, including in group clients.
+
+  Expose content document, revision, proposal, and comment types, and add the optional `required` flag to Remote View client command declarations so hosts can check compatibility before mounting a view.
+
+## 0.16.0
+
+### Minor Changes
+
+- 132cd0d: Add typed recovery controls for chat clients:
+  - Expose `threads.getCapabilities()` and `ThreadCapabilities` so clients can check retry availability without starting or replaying a run.
+  - Add the opt-in `displaySnapshot` option to `runs.joinStream()` to restore display state when the retained event prefix has been trimmed.
+  - Export `ReadRequestOptions` and accept abort signals for thread, run, conversation, and message-history reads.
+  - Export `HTTPError` with `retryAfterMs` derived from the server's `Retry-After` header so clients can respect recovery retry timing.
+
+  Existing calls remain compatible, and display snapshot recovery stays disabled unless explicitly requested.
+
+## 0.15.0
+
+### Minor Changes
+
+- 4453d2c: Add typed latest-sealed-reply thread copies with stable request IDs, preserving the historical-input edit contract and existing copy transport.
+
+### Patch Changes
+
+- f9d178c: Preserve the original authenticated native Workbench transport in group clients so conversation file requests use `/api/ai/conversations/:id/workspace/*`. Keep View requests on their group-scoped routes.
+
+## 0.14.0
+
+### Minor Changes
+
+- 63edbbf: Expose pinned plugin skill command metadata through AssistantsClient.getResourceCommands, with typed command presentation, subcommands and explicit skill references.
+
+## 0.13.2
+
+### Patch Changes
+
+- 62876e6: Add assistant_template runtime catalog components with optional title and description. Package selection continues to use bindingId and version. Release this SDK before updating ChatKit to display template sub-agents.
+
+## 0.13.1
+
+### Patch Changes
+
+- 14e8608: Add the optional browse or selection purpose to Assistant resource catalog queries. Selection lookup supports restoring existing conversation resources that are hidden from plugin discovery, while omitted purpose preserves default browsing behavior.
+
+## 0.13.0
+
+### Minor Changes
+
+- ae30677: Add optional limit and offset parameters to group invitation candidate queries. Preserve existing array responses, scoped authentication, and abort signals so clients can load subsequent pages without changing existing calls.
+
+## 0.12.0
+
+### Minor Changes
+
+- 53c9e00: Add authorized MCP App history reads and explicit interaction resumption without replaying the opening tool. Expose typed session expiry errors while preserving access denials and unrelated transport failures.
+
+## 0.11.0
+
+### Minor Changes
+
+- abf243d: Add group Project creation and selection with explicit Assistant participants, using the existing group authentication scope and retry-safe project identity.
+
+  Expose per-delivery and per-execution error messages so clients can display persisted Assistant failures in group conversations and execution records.
+
+## 0.10.0
+
+### Minor Changes
+
+- ced0cd4: Add ProjectsClient.create for interactive ChatKit project creation with typed Assistant bindings and cancellation.
+
+## 0.9.2
+
+### Patch Changes
+
+- 86e25fa: Describe optional server-resolved read/write capabilities on workspace file documents. Older servers may omit this field; consumers must treat missing write authority as read-only.
+
+## 0.9.1
+
+### Patch Changes
+
+- fd4f79c: Remove `GroupsClient.createSession`, which targeted the removed group-specific session endpoint. Hosts must use `POST /api/ai/v1/chatkit/sessions` with `{ scope: { kind: 'conversation', conversationId } }` and supply the returned ChatKit credential through the existing authentication hooks. Group requests and SSE use the same credential transport as other ChatKit APIs.
+
 ## 0.9.0
 
 ### Minor Changes

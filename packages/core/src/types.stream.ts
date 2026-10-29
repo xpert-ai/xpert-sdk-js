@@ -1,7 +1,6 @@
 import type { Message } from "./types.messages.js";
 import type { Interrupt, Metadata, Config, ThreadTask } from "./schema.js";
 /**
-import type { SubgraphCheckpointsStreamEvent } from "./types.stream.subgraph.js";
  * Stream modes
  * - "values": Stream only the state values.
  * - "messages": Stream complete messages.
@@ -45,7 +44,7 @@ export type ValuesStreamEvent<StateType> = {
   data: StateType;
 };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphValuesStreamEvent<StateType> = AsSubgraph<
   ValuesStreamEvent<StateType>
 >;
@@ -54,13 +53,14 @@ export type SubgraphValuesStreamEvent<StateType> = AsSubgraph<
  * Stream event with message chunks coming from LLM invocations inside nodes.
  */
 export type MessagesTupleStreamEvent = {
+  id?: string;
   event: "messages";
   // TODO: add types for message and config, which do not depend on LangChain
   // while making sure it's easy to keep them in sync.
   data: [message: Message, config: MessageTupleMetadata];
 };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphMessagesTupleStreamEvent =
   AsSubgraph<MessagesTupleStreamEvent>;
 
@@ -82,7 +82,7 @@ export type ErrorStreamEvent = {
   data: { error: string; message: string };
 };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphErrorStreamEvent = AsSubgraph<ErrorStreamEvent>;
 
 /**
@@ -96,7 +96,7 @@ export type UpdatesStreamEvent<UpdateType> = {
   data: { [node: string]: UpdateType };
 };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphUpdatesStreamEvent<UpdateType> = AsSubgraph<
   UpdatesStreamEvent<UpdateType>
 >;
@@ -104,9 +104,9 @@ export type SubgraphUpdatesStreamEvent<UpdateType> = AsSubgraph<
 /**
  * Streaming custom data from inside the nodes.
  */
-export type CustomStreamEvent<T> = { event: "custom"; data: T };
+export type CustomStreamEvent<T> = { id?: string; event: "custom"; data: T };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphCustomStreamEvent<T> = AsSubgraph<CustomStreamEvent<T>>;
 
 type MessagesMetadataStreamEvent = {
@@ -194,7 +194,7 @@ export type MessagesStreamEvent =
   | MessagesCompleteStreamEvent
   | MessagesPartialStreamEvent;
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphMessagesStreamEvent =
   | AsSubgraph<MessagesMetadataStreamEvent>
   | AsSubgraph<MessagesCompleteStreamEvent>
@@ -205,7 +205,7 @@ export type SubgraphMessagesStreamEvent =
  */
 export type DebugStreamEvent = { id?: string; event: "debug"; data: unknown };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphDebugStreamEvent = AsSubgraph<DebugStreamEvent>;
 
 /**
@@ -233,7 +233,7 @@ export type EventsStreamEvent = {
   };
 };
 
-/** @internal */
+// Referenced by the public TypedAsyncGenerator; must remain in emitted declarations.
 export type SubgraphEventsStreamEvent = AsSubgraph<EventsStreamEvent>;
 
 /**

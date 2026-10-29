@@ -1,5 +1,6 @@
+import type { ThreadControlView } from './thread-control-view.js';
 import type { JSONSchema7 } from "json-schema";
-import type { RuntimeResourcesSelection } from "./runtime-resources.js";
+import type { RuntimeResourceSkillReference, RuntimeResourcesSelection } from "./runtime-resources.js";
 import type {
   ChatFileChange,
   ChatTaskSummaryContribution,
@@ -50,23 +51,38 @@ export type ThreadPauseResult = ThreadRunControl;
 
 export type ThreadRunControl = {
   executionId: string;
-  state: "running" | "pausing" | "paused";
+  state: "running" | "pausing" | "paused" | "terminating" | "settling" | "input_wait";
   pauseId?: string;
   graphRevision?: string;
   checkpoint?: { threadId: string; checkpointNs: string; checkpointId: string };
 };
 
 export type ThreadCopyOptions = {
-  /** Fork before this human message, preserving the original branch and run. */
-  beforeMessageId: string;
   /** Stable identity for safely retrying this branch creation. */
   requestId: string;
-};
+} & (
+  | {
+      /** Fork before this human message, preserving the original branch and run. */
+      beforeMessageId: string;
+      mode?: never;
+    }
+  | {
+      /** Fork the latest sealed assistant reply; the source may keep running. */
+      mode: 'latest-sealed-reply';
+      beforeMessageId?: never;
+    }
+);
 
 export type ConversationBranchRequest = {
   sourceThreadId: string;
   afterMessageId: string;
   requestId: string;
+};
+
+/** Action availability for chat clients. Recovery diagnostics remain on the server. */
+export type ThreadCapabilities = {
+  controlView?: ThreadControlView;
+  canRetry: boolean;
 };
 
 export type ConversationBranchSource = {
@@ -299,6 +315,7 @@ export interface Thread<ValuesType = DefaultValues> {
   /** The status of the thread */
   status: ThreadStatus;
   runControl?: ThreadRunControl | null;
+  controlView?: ThreadControlView;
   displayPause?: ThreadDisplayPause | null;
   operation?: ChatConversation["operation"] | null;
 
@@ -398,6 +415,8 @@ export interface ThreadTask {
 }
 
 export interface Run {
+  /** Current thread controls; runId identifies the active execution independently of this historical run. */
+  controlView?: ThreadControlView;
   /** The ID of the run */
   run_id: string;
 
@@ -617,6 +636,8 @@ export type TCopilotModelOptions = {
 // Chat request types
 
 export type RuntimeCapabilitySkill = {
+  /** Portable plugin skill selected explicitly for this message. */
+  resource?: RuntimeResourceSkillReference;
   id: string;
   workspaceId: string;
   label: string;
@@ -760,6 +781,12 @@ export type XpertProject = {
   avatar?: Record<string, unknown> | string | null;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type XpertProjectCreateInput = {
+  name: string;
+  xpertIds: string[];
+  projectType?: XpertProjectTypeRef;
 };
 
 export type XpertProjectListOptions = {
@@ -1094,6 +1121,7 @@ export interface ChatRequestHuman {
   model?: string;
   files?: Partial<{ id: string; name: string; url: string; size: number; type: string }>[];
   runtimeResources?: RuntimeResourcesSelection;
+  resourceSkills?: RuntimeResourceSkillReference[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
   commandSource?: {
     type: "slash_command";
@@ -1345,6 +1373,7 @@ export type ChatConversationFrom =
 export type ChatConversationOptions = Record<string, unknown> & {
   projectSelection?: ProjectSelection;
   runtimeResources?: RuntimeResourcesSelection;
+  resourceSkills?: RuntimeResourceSkillReference[];
   runtimeCapabilities?: RuntimeCapabilitiesSelection | null;
 };
 
