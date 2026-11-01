@@ -6,7 +6,7 @@ export interface ThreadActivitySnapshot {
   version: 1;
   threadId: string;
   controlView?: ThreadControlView;
-  runs: Array<{ id: string; status: string; updatedAt: string; createdAt: string; messageRevision: string }>;
+  runs: Array<{ id: string; status: string; updatedAt: string; createdAt: string; messageRevision: string; messageCount?: number }>;
   cards: TMessageContentResourceCard[];
 }
 
@@ -22,5 +22,7 @@ export function isThreadActivitySnapshot(value: unknown): value is ThreadActivit
     'status' in run && typeof run.status === 'string' &&
     'createdAt' in run && typeof run.createdAt === 'string' &&
     'updatedAt' in run && typeof run.updatedAt === 'string' &&
-    'messageRevision' in run && typeof run.messageRevision === 'string');
+    'messageRevision' in run && typeof run.messageRevision === 'string' &&
+    (!('messageCount' in run) || run.messageCount === undefined ||
+      (typeof run.messageCount === 'number' && Number.isSafeInteger(run.messageCount) && run.messageCount >= 0)));
 }

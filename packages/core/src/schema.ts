@@ -300,6 +300,8 @@ export interface Interrupt<TValue = unknown> {
 }
 
 export interface Thread<ValuesType = DefaultValues> {
+  /** Authorized conversation metadata returned by a thread detail read, without messages. */
+  conversation?: ChatConversation;
   /** The ID of the thread. */
   thread_id: string;
 

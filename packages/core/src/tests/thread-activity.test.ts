@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Client, type ConversationResourceCard, type ResourceCardOpenTarget, type ThreadActivitySnapshot } from '../index.js';
+import { isThreadActivitySnapshot } from '../thread-activity.js';
 
 const openTargets: ResourceCardOpenTarget[] = [
   { target: 'workbench.view', viewKey: 'results' },
@@ -12,6 +13,17 @@ const openTargets: ResourceCardOpenTarget[] = [
 ];
 
 describe('thread activity subscriptions', () => {
+  it.each([undefined, 0, 1, 100])('accepts legacy and complete message counts: %s', (messageCount) => {
+    expect(isThreadActivitySnapshot({ version: 1, threadId: 'thread', cards: [], runs: [{
+      id: 'run', status: 'success', createdAt: '', updatedAt: '', messageRevision: '',
+      ...(messageCount === undefined ? {} : { messageCount }),
+    }] })).toBe(true);
+  });
+  it.each([-1, 0.5, '1', null, Number.MAX_SAFE_INTEGER + 1])('rejects invalid message counts: %s', (messageCount) => {
+    expect(isThreadActivitySnapshot({ version: 1, threadId: 'thread', cards: [], runs: [{
+      id: 'run', status: 'success', createdAt: '', updatedAt: '', messageRevision: '', messageCount,
+    }] })).toBe(false);
+  });
   it.each(openTargets)('preserves $target cards in abortable activity snapshots with a separate cursor', async (open) => {
     const card: ConversationResourceCard = {
       resource: { namespace: 'plugin', type: 'report', id: 'report' },
