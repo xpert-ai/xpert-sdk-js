@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.20.1
+
+### Patch Changes
+
+- 1683a35: Support bounded resource metadata lookup for exact selected references through the existing resource catalog API.
+- 8d97071: Expose optional conversation metadata on thread details and validated message counts on thread activity snapshots. These additive fields support shared history context and skipping unchanged completed-run message reads while preserving compatibility with older servers.
+
 ## 0.20.0
 
 ### Minor Changes
