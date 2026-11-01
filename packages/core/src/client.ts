@@ -689,6 +689,8 @@ export class AssistantsClient extends BaseClient {
       kind?: RuntimeResourceKind;
       /** Include assistant-role packages only to restore existing selections. Defaults to browse. */
       purpose?: 'browse' | 'selection';
+      /** Exact selected references. Requires purpose=selection; never scans candidate pages. */
+      references?: RuntimeResourcesSelection['resources'];
       offset?: number;
       limit?: number;
       signal?: AbortSignal;

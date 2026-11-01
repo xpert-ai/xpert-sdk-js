@@ -106,6 +106,8 @@ describe('runtime resources contract', () => {
     await client.assistants.getResources('assistant', { purpose: 'selection' });
     expect((fetch.mock.calls[0][0] as URL).searchParams.has('purpose')).toBe(false);
     expect((fetch.mock.calls[1][0] as URL).searchParams.get('purpose')).toBe('selection');
+    await client.assistants.getResources('assistant', { purpose: 'selection', references: selection.resources });
+    expect(JSON.parse((fetch.mock.calls[2][0] as URL).searchParams.get('references')!)).toEqual(selection.resources);
   });
 
   it('preserves pinned versions and server revisions when reading and replacing selections', async () => {
