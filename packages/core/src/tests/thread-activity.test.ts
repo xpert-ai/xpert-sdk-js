@@ -13,6 +13,44 @@ const openTargets: ResourceCardOpenTarget[] = [
 ];
 
 describe('thread activity subscriptions', () => {
+  it.each([401, 403, 404, 429, 500, 503])('throws SSE status %i instead of silently ending the subscription', async (status) => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(
+      `event: error\ndata: ${JSON.stringify({ version: 1, status, message: 'read failed' })}\n\n`,
+      { headers: { 'content-type': 'text/event-stream' } },
+    ));
+    const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch, maxRetries: 0 } });
+    await expect(client.threads.watchActivity('branch').next()).rejects.toMatchObject({ status, text: 'read failed' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it.each(['The requested record was not found', { version: 1, status: '404', message: 'bad status' }, null])(
+    'surfaces legacy or malformed error events without guessing a status: %j', async (payload) => {
+      const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch: async () => new Response(
+        `event: error\ndata: ${typeof payload === 'string' ? payload : JSON.stringify(payload)}\n\n`,
+        { headers: { 'content-type': 'text/event-stream' } },
+      ) } });
+      const error = await client.threads.watchActivity('branch').next().catch((value: unknown) => value);
+      expect(error).toBeInstanceOf(Error);
+      expect(error).not.toHaveProperty('status');
+      if (typeof payload === 'string') expect(error).toHaveProperty('message', payload);
+    },
+  );
+  it('preserves an authorization revocation after a successful snapshot and cancels the reader', async () => {
+    const cancel = vi.fn();
+    const snapshot = { version: 1, threadId: 'branch', cards: [], runs: [] };
+    const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch: async () => new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(
+            `event: thread.snapshot\ndata: ${JSON.stringify(snapshot)}\n\nevent: error\ndata: ${JSON.stringify({ version: 1, status: 403, message: 'revoked' })}\n\n`,
+          ));
+        }, cancel,
+      }), { headers: { 'content-type': 'text/event-stream' } },
+    ) } });
+    const stream = client.threads.watchActivity('branch');
+    expect((await stream.next()).value).toEqual(snapshot);
+    await expect(stream.next()).rejects.toMatchObject({ status: 403 });
+    await vi.waitFor(() => expect(cancel).toHaveBeenCalledOnce());
+  });
   it.each([undefined, 0, 1, 100])('accepts legacy and complete message counts: %s', (messageCount) => {
     expect(isThreadActivitySnapshot({ version: 1, threadId: 'thread', cards: [], runs: [{
       id: 'run', status: 'success', createdAt: '', updatedAt: '', messageRevision: '',

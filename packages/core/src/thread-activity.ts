@@ -1,5 +1,25 @@
 import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import type { TMessageContentResourceCard } from './resource-card.js';
+import { HTTPError } from './utils/async_caller.js';
+
+/** Terminal SSE error; status preserves HTTP retry and authorization semantics. */
+export interface ThreadActivityError {
+  version: 1;
+  status: number;
+  message: string;
+}
+
+export function activityStreamError(data: unknown): Error {
+  if (data && typeof data === 'object' &&
+      'version' in data && data.version === 1 &&
+      'status' in data && typeof data.status === 'number' &&
+      Number.isInteger(data.status) && data.status >= 400 && data.status <= 599 &&
+      'message' in data && typeof data.message === 'string') {
+    return new HTTPError(data.status, data.message);
+  }
+  // Older servers send plain text. Preserve it, but never infer a status from localized copy.
+  return new Error(typeof data === 'string' ? data : 'Thread activity stream failed.');
+}
 
 /** Complete discovery snapshot. Reconnect replaces discovery state; tokens use runs.joinStream. */
 export interface ThreadActivitySnapshot {

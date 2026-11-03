@@ -321,7 +321,7 @@ export type {
   TMessageContentResourceCard,
 } from "./resource-card.js";
 
-export type { ThreadActivitySnapshot } from './thread-activity.js';
+export type { ThreadActivitySnapshot, ThreadActivityError } from './thread-activity.js';
 
 export { GroupsClient } from './groups.js';
 export type { GroupRequestOptions } from './groups.js';

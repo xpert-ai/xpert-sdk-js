@@ -11,7 +11,7 @@ import type {
 import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import { ContentClient } from './content.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
-import { isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
+import { activityStreamError, isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
 import { readViewFilePreviewResponse, type XpertViewFilePreviewRequest, type XpertViewFilePreviewResult } from './view-file-preview.js';
 import { WorkbenchClient, type WorkbenchTransport } from "./workbench.js";
@@ -1338,6 +1338,7 @@ export class ThreadsClient<
   /** Observe committed runs and task cards without starting or resuming execution. */
   async *watchActivity(threadId: string, options?: { signal?: AbortSignal; lastEventId?: string }): AsyncGenerator<ThreadActivitySnapshot> {
     for await (const item of this.joinStream(threadId, options)) {
+      if (item.event === 'error') throw activityStreamError(item.data);
       if (item.event === 'thread.snapshot' && isThreadActivitySnapshot(item.data) && item.data.threadId === threadId) {
         yield item.data;
       }
@@ -1380,7 +1381,18 @@ export class ThreadsClient<
       .pipeThrough(BytesLineDecoder())
       .pipeThrough(SSEDecoder());
 
-    yield* IterableReadableStream.fromReadableStream(stream);
+    const reader = stream.getReader();
+    try {
+      while (true) {
+        const item = await reader.read();
+        if (item.done) break;
+        yield item.value;
+      }
+    } finally {
+      // An error event stops discovery even if the server has not closed the socket yet.
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
   }
 }
 
