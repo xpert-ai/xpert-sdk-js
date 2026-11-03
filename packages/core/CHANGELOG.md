@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.20.2
+
+### Patch Changes
+
+- 715b48b: Preserve HTTP status codes from thread activity SSE error events so consumers can distinguish authorization failures from retryable errors, and cancel the underlying stream when a subscription exits.
+
 ## 0.20.1
 
 ### Patch Changes
