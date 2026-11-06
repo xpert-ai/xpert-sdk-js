@@ -37,6 +37,8 @@ export interface ChatGroupComposerInput {
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
 }
 export interface ChatGroupCommunication {
+  /** The initiating client can present and answer a form for this message. */
+  supportsUserInput?: boolean;
   composer?: ChatGroupComposerInput;
   intent: ChatGroupIntent;
   senderId: string;
@@ -60,6 +62,8 @@ export interface ChatGroupMessage {
 /** Member IDs are bound to exact @ spans in the submitted text; no hidden recipient selection. */
 export interface ChatGroupMention { participantId: string; start: number; end: number }
 export type ChatGroupSendInput = {
+  /** The initiating client can present and answer a form for this message. */
+  supportsUserInput?: boolean;
   composer?: ChatGroupComposerInput;
   clientMessageId: string;
   text: string;
