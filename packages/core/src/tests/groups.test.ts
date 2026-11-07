@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Client } from '../client.js';
 import { isGroupEvent } from '../groups.js';
+import type { ChatGroupProjectInput } from '../group-types.js';
 
 describe('group client', () => {
   it('passes candidate pagination, group scope, search and cancellation without changing the array response', async () => {
@@ -53,8 +54,13 @@ describe('group client', () => {
       callerOptions: { fetch },
       onRequest: (_url, init) => ({ ...init, headers: { Authorization: 'Bearer cs-x-group' } }),
     });
-    const input = {
-      project: { mode: 'create' as const, id: 'p', name: 'Shared' },
+    const input: ChatGroupProjectInput = {
+      project: {
+        mode: 'create',
+        id: 'p',
+        name: 'Shared',
+        projectType: { applicationKey: 'test:dashboard', projectTypeKey: 'dashboard' },
+      },
       participantIds: ['a', 'b'],
     };
     await client.groups.setProject('g/1', input);
@@ -68,6 +74,9 @@ describe('group client', () => {
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toEqual(input);
     expect(fetch.mock.calls[1][1]?.body).toBe(fetch.mock.calls[0][1]?.body);
     expect(fetch.mock.calls[2][1]?.method ?? 'GET').toBe('GET');
+    const reuse: ChatGroupProjectInput = { project: { mode: 'existing', projectId: 'p', reuse: true }, participantIds: ['a'] };
+    await client.groups.setProject('g/1', reuse);
+    expect(JSON.parse(fetch.mock.calls[3][1]?.body as string)).toEqual(reuse);
   });
   it('uses the original Views protocol inside the group boundary and keeps public runtime reads on the group API', async () => {
     const fetch = vi
@@ -184,6 +193,9 @@ describe('group client', () => {
     const scoped = client.forGroupComposer('group/1', 'member/2');
     await scoped.assistants.getRuntimeCapabilities('assistant');
     await scoped.projects.list({ xpertId: 'assistant' });
+    expect((fetch.mock.calls.at(-1)![0] as URL).searchParams.has('groupProjectUsage')).toBe(false);
+    await scoped.projects.list({ xpertId: 'assistant', groupProjectUsage: 'reuse' });
+    expect((fetch.mock.calls.at(-1)![0] as URL).searchParams.get('groupProjectUsage')).toBe('reuse');
     await scoped.projects.get('project/2');
     expect((fetch.mock.calls.at(-1)![0] as URL).pathname).toBe(
       '/api/ai/groups/group%2F1/members/member%2F2/composer/project%2F2'

@@ -2366,6 +2366,7 @@ export class ProjectsClient extends BaseClient {
     return this.fetch<Pagination<XpertProject>>("/available", {
       params: {
         xpertId: options.xpertId,
+        ...(options.groupProjectUsage ? { groupProjectUsage: options.groupProjectUsage } : {}),
         ...(options.applicationKey ? { applicationKey: options.applicationKey } : {}),
         ...(options.projectTypeKey ? { projectTypeKey: options.projectTypeKey } : {}),
         ...(options.search ? { search: options.search } : {}),
