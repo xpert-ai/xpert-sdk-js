@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.20.3
+
+### Patch Changes
+
+- 0ebb6d1: Allow group project creation to carry an explicit project type, discover independent or reusable group projects, and explicitly confirm cross-group reuse while preserving the existing creation identity and group credential scope.
+
 ## 0.20.2
 
 ### Patch Changes
