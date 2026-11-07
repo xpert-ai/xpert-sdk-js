@@ -1,5 +1,7 @@
 // This file is compiled in a fresh consumer with no paths aliases and skipLibCheck=false.
 import {
+  ASSISTANT_COMPOSER_INSERT_COMMAND,
+  type AssistantComposerInsertPayload,
   Client,
   HTTPError,
   isThreadControlView,
@@ -13,6 +15,17 @@ import {
   type ConversationShareList,
   type SharedConversation,
 } from '@xpert-ai/xpert-sdk';
+
+// Verify the installed package exposes both the wire command and its complete draft payload.
+const composerCommand: 'assistant.composer.insert' = ASSISTANT_COMPOSER_INSERT_COMMAND;
+const composerPayload: AssistantComposerInsertPayload = {
+  text: 'Analyze hotel reservations and cancellations.',
+  workspaceFiles: [{ path: 'inputs/bookings.csv', name: 'bookings.csv', mimeType: 'text/csv', size: 128 }],
+  skillNames: ['live-dashboard'],
+};
+const textOnlyPayload: AssistantComposerInsertPayload = { text: 'Create a dashboard.' };
+void [composerCommand, composerPayload, textOnlyPayload];
+
 const client = new Client({ apiUrl: 'http://127.0.0.1:1/api/ai' });
 const options: ReadRequestOptions = { signal: new AbortController().signal };
 const view: Promise<ThreadControlView> = client.threads.getControlView('thread', options);

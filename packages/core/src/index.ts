@@ -206,6 +206,7 @@ export type {
 export {
   ASSISTANT_CHAT_SEND_MESSAGE_COMMAND,
   ASSISTANT_CITATION_OPEN_EVENT,
+  ASSISTANT_COMPOSER_INSERT_COMMAND,
   ASSISTANT_CONTEXT_SET_COMMAND,
   KNOWLEDGEBASE_OPEN_CITATION_EFFECT,
   WORKBENCH_ASSISTANT_CONVERSATION_TARGET,
@@ -217,6 +218,7 @@ export {
   XPERT_VIEW_PROJECT_ID_HEADER,
 } from "./view-extension.js";
 export type {
+  AssistantComposerInsertPayload,
   XpertExtensionViewManifest,
   XpertI18nObject,
   XpertRemoteComponentEntry,

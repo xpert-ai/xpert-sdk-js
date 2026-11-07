@@ -425,6 +425,8 @@ export interface XpertViewFileAccessGrantResult {
 
 export const ASSISTANT_CHAT_SEND_MESSAGE_COMMAND =
   "assistant.chat.send_message";
+/** Append editable context to the current composer. Never starts a run or changes thread. */
+export const ASSISTANT_COMPOSER_INSERT_COMMAND = "assistant.composer.insert";
 export const ASSISTANT_CONTEXT_SET_COMMAND = "assistant.context.set";
 export const WORKBENCH_FILE_OPEN_COMMAND = "workbench.file.open";
 export const WORKBENCH_NAVIGATION_OPEN_COMMAND = "workbench.navigation.open";
@@ -433,6 +435,14 @@ export const WORKBENCH_KNOWLEDGEBASE_DOCUMENTS_TARGET =
 export const WORKBENCH_ASSISTANT_CONVERSATION_TARGET = "assistant.conversation";
 export const XPERT_REMOTE_COMPONENT_INVOKE_CLIENT_COMMAND_MESSAGE_TYPE =
   "invokeClientCommand";
+
+/** @beta Composer insertion payload; may change incompatibly during beta. */
+export interface AssistantComposerInsertPayload {
+  text: string;
+  workspaceFiles?: { path: string; name: string; mimeType?: string; size?: number }[];
+  /** Exact skill names resolved uniquely against the current assistant/project capability catalog. */
+  skillNames?: string[];
+}
 
 export interface WorkbenchOpenFileEvidenceBox {
   x: number;

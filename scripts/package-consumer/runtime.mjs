@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import {
+  ASSISTANT_COMPOSER_INSERT_COMMAND,
   Client,
   HTTPError,
   isThreadControlView,
   mergeThreadControlView,
 } from '@xpert-ai/xpert-sdk';
+assert.equal(ASSISTANT_COMPOSER_INSERT_COMMAND, 'assistant.composer.insert');
 const view = {
   version: 1,
   threadId: 'thread/id',
