@@ -790,6 +790,8 @@ export type XpertProjectCreateInput = {
 };
 
 export type XpertProjectListOptions = {
+  /** Group Composer only: independent by default; reuse explicitly lists Projects used by other groups. */
+  groupProjectUsage?: 'independent' | 'reuse';
   search?: string;
   applicationKey?: string;
   projectTypeKey?: string;

@@ -1,4 +1,5 @@
 import type { ChatMessage } from './schema.js';
+import type { XpertProjectTypeRef } from './schema.js';
 import type { RuntimeCapabilitiesSelection } from './schema.js';
 import type { RuntimeResourcesSelection } from './runtime-resources.js';
 
@@ -181,7 +182,9 @@ export interface ChatGroupWorkbenchContext {
 
 /** Select the Assistant participants that may execute tasks in the shared Project. */
 export interface ChatGroupProjectInput {
-  project: { mode: 'create'; id: string; name: string } | { mode: 'existing'; projectId: string };
+  project:
+    | { mode: 'create'; id: string; name: string; projectType?: XpertProjectTypeRef }
+    | { mode: 'existing'; projectId: string; reuse?: true };
   /** Include the primary Assistant. Updates add participants and preserve existing bindings. */
   participantIds: string[];
 }
