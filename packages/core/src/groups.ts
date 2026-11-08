@@ -1,3 +1,4 @@
+import { GroupArtifactsClient } from './group-artifacts.js';
 import type {
   ChatGroupProject,
   ChatGroupProjectInput,
@@ -35,7 +36,11 @@ export interface GroupTransport {
  * POST /api/ai/v1/chatkit/sessions; GroupsClient does not mint credentials.
  */
 export class GroupsClient {
-  constructor(private readonly transport: GroupTransport) {}
+  /** Group-scoped published references; source grant management is intentionally a separate API. */
+  readonly artifacts: GroupArtifactsClient;
+  constructor(private readonly transport: GroupTransport) {
+    this.artifacts = new GroupArtifactsClient(transport);
+  }
   project(groupId: string, options?: GroupRequestOptions): Promise<ChatGroupProject | null> {
     return this.transport.json(`/groups/${encodeURIComponent(groupId)}/project`, options);
   }
@@ -214,6 +219,7 @@ export class GroupsClient {
       `/groups/${encodeURIComponent(groupId)}/stream`,
       options
     )) {
+      if (item.event === 'error') throw new Error('Group stream failed');
       if (item.event !== 'group') continue;
       if (!isGroupEvent(item.data)) throw new Error('Invalid group stream event');
       if (item.data.type === 'snapshot' && item.data.snapshot.id !== groupId)
@@ -227,6 +233,28 @@ export class GroupsClient {
 export function isGroupEvent(value: unknown): value is ChatGroupEvent {
   if (!value || typeof value !== 'object' || !('type' in value)) return false;
   if (value.type === 'resync') return true;
+  if (value.type === 'resource_open') {
+    if (!('request' in value) || !value.request || typeof value.request !== 'object') return false;
+    const r = value.request;
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return (
+      'requestId' in r &&
+      typeof r.requestId === 'string' &&
+      uuid.test(r.requestId) &&
+      'clientMessageId' in r &&
+      typeof r.clientMessageId === 'string' &&
+      uuid.test(r.clientMessageId) &&
+      'referenceId' in r &&
+      typeof r.referenceId === 'string' &&
+      uuid.test(r.referenceId) &&
+      'projectId' in r &&
+      typeof r.projectId === 'string' &&
+      uuid.test(r.projectId) &&
+      'title' in r &&
+      typeof r.title === 'string' &&
+      r.title.length <= 200
+    );
+  }
   if (value.type === 'text')
     return (
       'participantId' in value &&

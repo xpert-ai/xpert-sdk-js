@@ -47,7 +47,43 @@ export interface ChatGroupComposerInput {
   runtimeResources?: RuntimeResourcesSelection;
   runtimeCapabilities?: RuntimeCapabilitiesSelection;
 }
+/**
+ * Server-authored clickable entry persisted in message history, not an open-on-load instruction.
+ * Clicking must reauthorize the reference through the current group's transport.
+ */
+export interface ChatGroupResourceLink {
+  /** Accepted reference ID, not a source Artifact ID or public share token. */
+  referenceId: string;
+  /** Receiving group's runtime Project; never switch to the source authoring Project. */
+  projectId: string;
+  /** Display label only; do not infer identity or resource type from it. */
+  title: string;
+}
+/** Live, requester-addressed navigation event; consumers match the local send and deduplicate it. */
+export interface ChatGroupResourceOpenRequest extends ChatGroupResourceLink {
+  /** Server-generated deduplication ID; do not open the same request twice. */
+  requestId: string;
+  /** Initiating client message correlation ID, or server message ID fallback. */
+  clientMessageId: string;
+}
 export interface ChatGroupCommunication {
+  /** Inert resource entries, including during history playback; these alone never auto-open. */
+  resourceLinks?: ChatGroupResourceLink[];
+  /**
+   * Server-authored routing metadata used to derive a fresh, audience-scoped resource_open event.
+   * Renderers must not treat replayed communication metadata as a new navigation request.
+   */
+  resourceNavigation?: {
+    /** Navigation deduplication ID propagated to ChatGroupResourceOpenRequest. */
+    requestId: string;
+    /** Server emission time in Unix epoch milliseconds for freshness checks. */
+    issuedAt: number;
+    /** Initiating client message ID, with server message ID as fallback. */
+    clientMessageId: string;
+    /** Intended viewer's group membership ID, not an account or Assistant ID. */
+    participantId: string;
+  };
+
   /** Host-owned task context, unavailable in group send inputs. */
   projectTask?: {
     invocationId: string;
@@ -152,6 +188,7 @@ export interface ChatGroupRun {
   status: 'busy' | 'pausing' | 'paused' | 'interrupted' | 'idle' | 'error';
 }
 export type ChatGroupEvent =
+  | { type: 'resource_open'; request: ChatGroupResourceOpenRequest }
   | { type: 'snapshot'; snapshot: ChatGroupSnapshot }
   | { type: 'text'; participantId: string; runId: string; messageId: string; text: string }
   | { type: 'resync' };

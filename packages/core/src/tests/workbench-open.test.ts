@@ -19,6 +19,21 @@ describe('workbench view open events', () => {
     });
   });
 
+  it('requires a valid paired live request identity and timestamp', () => {
+    const issuedAt = Date.now();
+    expect(parseWorkbenchViewOpenEvent(event({ requestId: 'r', issuedAt }))).toMatchObject({
+      requestId: 'r',
+      issuedAt,
+    });
+    for (const fields of [
+      { requestId: 'r' },
+      { issuedAt },
+      { requestId: '', issuedAt },
+      { requestId: 'r', issuedAt: NaN },
+    ])
+      expect(parseWorkbenchViewOpenEvent(event(fields))).toBeNull();
+  });
+
   it('keeps the conversation scope, selection and scalar parameters', () => {
     expect(
       parseWorkbenchViewOpenEvent(

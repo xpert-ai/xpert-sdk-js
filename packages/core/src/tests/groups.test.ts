@@ -4,6 +4,15 @@ import { isGroupEvent } from '../groups.js';
 import type { ChatGroupProjectInput } from '../group-types.js';
 
 describe('group client', () => {
+  it('surfaces an SSE error so the observer can reconnect instead of silently losing live events', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      new Response('event: error\ndata: {"message":"stream_failed"}\n\n', {
+        headers: { 'content-type': 'text/event-stream' },
+      })
+    );
+    const client = new Client({ apiUrl: 'https://example.test/api/ai', callerOptions: { fetch } });
+    await expect(client.groups.stream('group').next()).rejects.toThrow('Group stream failed');
+  });
   it('passes candidate pagination, group scope, search and cancellation without changing the array response', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()
@@ -74,7 +83,10 @@ describe('group client', () => {
     expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toEqual(input);
     expect(fetch.mock.calls[1][1]?.body).toBe(fetch.mock.calls[0][1]?.body);
     expect(fetch.mock.calls[2][1]?.method ?? 'GET').toBe('GET');
-    const reuse: ChatGroupProjectInput = { project: { mode: 'existing', projectId: 'p', reuse: true }, participantIds: ['a'] };
+    const reuse: ChatGroupProjectInput = {
+      project: { mode: 'existing', projectId: 'p', reuse: true },
+      participantIds: ['a'],
+    };
     await client.groups.setProject('g/1', reuse);
     expect(JSON.parse(fetch.mock.calls[3][1]?.body as string)).toEqual(reuse);
   });
@@ -195,7 +207,9 @@ describe('group client', () => {
     await scoped.projects.list({ xpertId: 'assistant' });
     expect((fetch.mock.calls.at(-1)![0] as URL).searchParams.has('groupProjectUsage')).toBe(false);
     await scoped.projects.list({ xpertId: 'assistant', groupProjectUsage: 'reuse' });
-    expect((fetch.mock.calls.at(-1)![0] as URL).searchParams.get('groupProjectUsage')).toBe('reuse');
+    expect((fetch.mock.calls.at(-1)![0] as URL).searchParams.get('groupProjectUsage')).toBe(
+      'reuse'
+    );
     await scoped.projects.get('project/2');
     expect((fetch.mock.calls.at(-1)![0] as URL).pathname).toBe(
       '/api/ai/groups/group%2F1/members/member%2F2/composer/project%2F2'
@@ -251,4 +265,20 @@ describe('group client', () => {
     ).toBe(false);
     expect(isGroupEvent({ type: 'resync' })).toBe(true);
   });
+});
+
+it('validates resource navigation targets without trusting partial events', () => {
+  const id = '11a11111-1111-4111-8111-111111111111';
+  const request = {
+    requestId: id,
+    clientMessageId: id,
+    referenceId: id,
+    projectId: id,
+    title: 'Inventory',
+  };
+  expect(isGroupEvent({ type: 'resource_open', request })).toBe(true);
+  expect(
+    isGroupEvent({ type: 'resource_open', request: { ...request, referenceId: '../foreign' } })
+  ).toBe(false);
+  expect(isGroupEvent({ type: 'resource_open', request: { title: 'Inventory' } })).toBe(false);
 });

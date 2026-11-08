@@ -7,14 +7,17 @@ export {
   WorkspacesClient,
   XpertsClient,
   getApiKey,
-} from "./client.js";
-export { HTTPError } from "./utils/async_caller.js";
-export type { XpertViewFilePreviewRequest, XpertViewFilePreviewResult } from "./view-file-preview.js";
-export type { ClientConfig, RequestHook, ReadRequestOptions } from "./client.js";
-export { McpClient, McpAppsClient, McpPublicationsClient } from "./mcp/index.js";
-export type * from "./mcp/types.js";
-export { McpAppSessionError, isMcpAppSessionError } from "./mcp/session-error.js";
-export type { McpAppSessionErrorCode } from "./mcp/session-error.js";
+} from './client.js';
+export { HTTPError } from './utils/async_caller.js';
+export type {
+  XpertViewFilePreviewRequest,
+  XpertViewFilePreviewResult,
+} from './view-file-preview.js';
+export type { ClientConfig, RequestHook, ReadRequestOptions } from './client.js';
+export { McpClient, McpAppsClient, McpPublicationsClient } from './mcp/index.js';
+export type * from './mcp/types.js';
+export { McpAppSessionError, isMcpAppSessionError } from './mcp/session-error.js';
+export type { McpAppSessionErrorCode } from './mcp/session-error.js';
 
 export type {
   Assistant,
@@ -161,14 +164,10 @@ export type {
   XpertWorkspaceFile,
   XpertWorkspaceFileListOptions,
   XpertWorkspaceStatus,
-} from "./schema.js";
-export { overrideFetchImplementation } from "./singletons/fetch.js";
+} from './schema.js';
+export { overrideFetchImplementation } from './singletons/fetch.js';
 
-export type {
-  Command,
-  OnConflictBehavior,
-  RunsInvokePayload,
-} from "./types.js";
+export type { Command, OnConflictBehavior, RunsInvokePayload } from './types.js';
 export type {
   AIMessage,
   ChatSkillUsage,
@@ -188,7 +187,7 @@ export type {
   RemoveMessage,
   SystemMessage,
   ToolMessage,
-} from "./types.messages.js";
+} from './types.messages.js';
 export type {
   CustomStreamEvent,
   DebugStreamEvent,
@@ -201,7 +200,7 @@ export type {
   StreamMode,
   UpdatesStreamEvent,
   ValuesStreamEvent,
-} from "./types.stream.js";
+} from './types.stream.js';
 
 export {
   ASSISTANT_CHAT_SEND_MESSAGE_COMMAND,
@@ -216,7 +215,7 @@ export {
   XPERT_REMOTE_COMPONENT_INVOKE_CLIENT_COMMAND_MESSAGE_TYPE,
   XPERT_VIEW_CONVERSATION_ID_HEADER,
   XPERT_VIEW_PROJECT_ID_HEADER,
-} from "./view-extension.js";
+} from './view-extension.js';
 export type {
   AssistantComposerInsertPayload,
   XpertExtensionViewManifest,
@@ -297,11 +296,11 @@ export type {
   WorkbenchOpenFile,
   WorkbenchOpenFileEvidence,
   WorkbenchOpenFileEvidenceBox,
-} from "./view-extension.js";
+} from './view-extension.js';
 
-export type * from "./runtime-resources.js";
+export type * from './runtime-resources.js';
 
-export { WorkbenchClient } from "./workbench.js";
+export { WorkbenchClient } from './workbench.js';
 export type {
   WorkspaceFileScope,
   WorkspaceFileDocument,
@@ -310,8 +309,8 @@ export type {
   TerminalEvent,
   TerminalConnection,
   TerminalOpenOptions,
-} from "./workbench.js";
-export * from "./workbench-open.js";
+} from './workbench.js';
+export * from './workbench-open.js';
 export type {
   ConversationResourceCard,
   ResourceCardContent,
@@ -321,13 +320,18 @@ export type {
   ResourceCardImage,
   ResourceCardOpenTarget,
   TMessageContentResourceCard,
-} from "./resource-card.js";
+} from './resource-card.js';
 
 export type { ThreadActivitySnapshot, ThreadActivityError } from './thread-activity.js';
 
 export { GroupsClient } from './groups.js';
+export { GroupArtifactsClient } from './group-artifacts.js';
+export type * from './artifact-presentation-types.js';
+export type * from './group-artifact-types.js';
 export type { GroupRequestOptions } from './groups.js';
 export type * from './group-types.js';
 
 export * from './thread-control-view.js';
 export * from './content.js';
+
+export type * from './resource-analysis-types.js';
