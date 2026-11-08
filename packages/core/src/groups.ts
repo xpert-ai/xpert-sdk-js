@@ -385,6 +385,8 @@ function isMessage(v: unknown): v is ChatGroupMessage {
     'hop' in c &&
     typeof c.hop === 'number' &&
     (!('replyToMessageId' in c) || typeof c.replyToMessageId === 'string') &&
+    (!('replyStage' in c) ||
+      (c.intent === 'reply' && (c.replyStage === 'progress' || c.replyStage === 'final'))) &&
     'deliveries' in v &&
     Array.isArray(v.deliveries) &&
     v.deliveries.every(

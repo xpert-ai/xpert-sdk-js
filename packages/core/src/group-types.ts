@@ -5,6 +5,12 @@ import type { RuntimeResourcesSelection } from './runtime-resources.js';
 
 /** Snapshots expose public messages; runtime details require workspace read access. */
 export type ChatGroupIntent = 'request' | 'reply' | 'message';
+/**
+ * Completion intent for one sender's answer to one request, independent of delivery/run status.
+ * Progress is a partial answer and does not wake the requester; final completes the answer only
+ * after successful publication. Neither stage accepts or completes a Project task.
+ */
+export type ChatGroupReplyStage = 'progress' | 'final';
 export type ChatGroupDeliveryStatus =
   | 'pending'
   | 'starting'
@@ -105,6 +111,12 @@ export interface ChatGroupCommunication {
   senderId: string;
   recipientIds: string[];
   replyToMessageId?: string;
+  /**
+   * Only valid on replies. Missing on legacy replies means final; new publications include it.
+   * A successfully published final tool reply suppresses the automatic final answer for the same
+   * request and sender. Progress, message and request publications do not suppress that answer.
+   */
+  replyStage?: ChatGroupReplyStage;
   causedByMessageId?: string;
   rootMessageId: string;
   rootUserId: string;
