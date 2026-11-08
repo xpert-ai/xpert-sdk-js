@@ -1,5 +1,17 @@
 # @xpert-ai/xpert-sdk
 
+## 0.22.0
+
+### Minor Changes
+
+- c04055b: Export transport-independent ArtifactPresentation and ArtifactPresentationQuery types. Preserve the group-specific names as compatibility aliases and reuse the common presentation protocol in group responses.
+- c04055b: Expose validated group resource-open events and host-authored resource links. Add optional paired request identity and timestamp to live Workbench navigation.
+
+  Surface group SSE errors so clients can reconnect after an observer failure.
+
+- c04055b: Expose typed group Artifact offers, acceptance, fixed-version viewing, read-only querying and removal through the existing authenticated group transport.
+- c04055b: Expose generic resource analysis policy and explicit group-owner acceptance of conversational data analysis.
+
 ## 0.21.0
 
 ### Minor Changes
