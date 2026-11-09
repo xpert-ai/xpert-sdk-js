@@ -127,6 +127,15 @@ export interface ChatGroupMessage {
   clientMessageId: string;
   sequence: number;
   text: string;
+  /**
+   * Optional server-filtered result snapshots. May be present with empty text.
+   * IDs are stable within this public message; repeated snapshots replace rather than append blocks.
+   * Known forms use existing ChatKit `resource_card` or `component` (Widget / McpApp) payloads.
+   * Payloads stay opaque at this transport boundary: renderers must validate the concrete type,
+   * ignore unknown forms and never reconnect a copied MCP result to the originating App session.
+   * These blocks confer no resource permissions, do not wake recipients and do not complete replies.
+   */
+  display?: { id: string; type: 'component' | 'resource_card'; data: unknown }[];
   createdAt: string;
   communication: ChatGroupCommunication;
   runtimeParticipantIds?: string[];

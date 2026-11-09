@@ -4,6 +4,59 @@ import { isGroupEvent } from '../groups.js';
 import type { ChatGroupProjectInput } from '../group-types.js';
 
 describe('group client', () => {
+  it('preserves card-only group display snapshots through history and SSE without requiring a renderer dependency', async () => {
+    const display = [
+      {
+        id: 'card',
+        type: 'component' as const,
+        data: { type: 'McpApp', toolResult: { content: [{ type: 'text', text: '42' }] } },
+      },
+    ];
+    const snapshot = {
+      id: 'group',
+      threadId: 'thread',
+      title: 'Group',
+      viewerParticipantId: 'viewer',
+      xpertId: 'assistant',
+      members: [],
+      revision: 2,
+      runs: [],
+      hasMore: false,
+      messages: [
+        {
+          id: 'message',
+          clientMessageId: 'client',
+          sequence: 1,
+          text: '',
+          display,
+          createdAt: '2026-11-09T00:00:00Z',
+          deliveries: [],
+          communication: {
+            intent: 'message',
+            senderId: 'member',
+            recipientIds: [],
+            rootMessageId: 'root',
+            rootUserId: 'viewer',
+            hop: 1,
+          },
+        },
+      ],
+    };
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(snapshot), { headers: { 'content-type': 'application/json' } })
+      )
+      .mockResolvedValueOnce(
+        new Response(`event: group\ndata: ${JSON.stringify({ type: 'snapshot', snapshot })}\n\n`, {
+          headers: { 'content-type': 'text/event-stream' },
+        })
+      );
+    const client = new Client({ apiUrl: 'https://example.test/api/ai', callerOptions: { fetch } });
+    expect((await client.groups.get('group')).messages[0].display).toEqual(display);
+    const event = (await client.groups.stream('group').next()).value;
+    expect(event).toMatchObject({ data: { type: 'snapshot', snapshot } });
+  });
   it('surfaces an SSE error so the observer can reconnect instead of silently losing live events', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
       new Response('event: error\ndata: {"message":"stream_failed"}\n\n', {
