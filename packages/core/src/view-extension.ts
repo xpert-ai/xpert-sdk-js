@@ -433,6 +433,8 @@ export const WORKBENCH_NAVIGATION_OPEN_COMMAND = "workbench.navigation.open";
 export const WORKBENCH_KNOWLEDGEBASE_DOCUMENTS_TARGET =
   "knowledgebase.documents";
 export const WORKBENCH_ASSISTANT_CONVERSATION_TARGET = "assistant.conversation";
+/** Locate a public message in the currently open group; never opens a private Assistant runtime. */
+export const WORKBENCH_GROUP_MESSAGE_TARGET = "group.message";
 export const XPERT_REMOTE_COMPONENT_INVOKE_CLIENT_COMMAND_MESSAGE_TYPE =
   "invokeClientCommand";
 
@@ -484,13 +486,19 @@ export interface WorkbenchOpenFile {
 
 export type WorkbenchNavigationOpenTarget =
   | typeof WORKBENCH_KNOWLEDGEBASE_DOCUMENTS_TARGET
-  | typeof WORKBENCH_ASSISTANT_CONVERSATION_TARGET;
+  | typeof WORKBENCH_ASSISTANT_CONVERSATION_TARGET
+  | typeof WORKBENCH_GROUP_MESSAGE_TARGET;
 
 export interface WorkbenchNavigationOpenPayload {
   target: WorkbenchNavigationOpenTarget;
   knowledgebaseId?: string;
+  /** For `group.message`, the current public group ID; cross-group navigation is rejected. */
   conversationId?: string;
   threadId?: string;
+  /** Public group message anchor for `group.message`. Loaded through the group's authorized history. */
+  messageId?: string;
+  /** Keep the originating view visible when locating a message. */
+  preserveView?: boolean;
   executionId?: string;
 }
 
