@@ -11,11 +11,23 @@ const versions = [
   { input: { ...base, kind: 'project-content', contentId: id }, kind: 'project-content' },
   { input: { ...base, resource: { kind: 'group-reference', id } }, kind: 'group-reference' },
   { input: { ...base, resource: { kind: 'project-content', id } }, kind: 'project-content' },
+  {
+    input: {
+      ...base,
+      icon: { type: 'svg', value: '<svg viewBox="0 0 24 24"/>', alt: 'Inventory' },
+      resource: { kind: 'group-reference', id },
+    },
+    kind: 'group-reference',
+  },
 ];
 it.each(versions)(
   'normalizes resource links at HTTP history, send and SSE boundaries ($kind)',
   async ({ input, kind }) => {
-    const link = { ...base, resource: { kind, id } };
+    const link = {
+      ...base,
+      ...('icon' in input ? { icon: input.icon } : {}),
+      resource: { kind, id },
+    };
     const message = {
       id,
       clientMessageId: id,
@@ -55,7 +67,10 @@ it.each(versions)(
       .mockResolvedValueOnce(new Response(JSON.stringify(message)))
       .mockResolvedValueOnce(
         new Response(
-          `event: group\ndata: ${JSON.stringify({ type: 'snapshot', snapshot })}\n\nevent: group\ndata: ${JSON.stringify(navigation)}\n\n`,
+          `event: group\ndata: ${JSON.stringify({
+            type: 'snapshot',
+            snapshot,
+          })}\n\nevent: group\ndata: ${JSON.stringify(navigation)}\n\n`,
           { headers: { 'content-type': 'text/event-stream' } }
         )
       );
@@ -84,6 +99,18 @@ it.each(versions)(
     expect(isGroupEvent(navigation)).toBe('resource' in input);
   }
 );
+it('ignores malformed optional icons without losing valid navigation targets', () => {
+  const link = { ...base, resource: { kind: 'project-content', id } };
+  for (const icon of [
+    null,
+    '📊',
+    { type: 'custom', value: 'x' },
+    { type: 'svg', value: '<svg/>', size: -1 },
+    { type: 'emoji', value: '📊', style: [] },
+  ]) {
+    expect(parseGroupResourceLink({ ...link, icon })).toEqual(link);
+  }
+});
 it('rejects malformed and ambiguous locators instead of guessing their identity', () => {
   for (const input of [
     { ...base, resource: { kind: 'dashboard', id } },

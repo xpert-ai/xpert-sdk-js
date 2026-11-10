@@ -5,6 +5,7 @@ import type {
   ChatGroupResourceOpenRequest,
   ChatGroupSnapshot,
 } from './group-types.js';
+import { parseIconDefinition } from './icon-definition.js';
 
 // Compatibility belongs at HTTP/SSE decoding. Consumers only receive canonical resource locators.
 type LegacyResourceLink = Pick<ChatGroupResourceLink, 'projectId' | 'title'> &
@@ -49,7 +50,8 @@ export function parseGroupResourceLink(value: unknown): ChatGroupResourceLink | 
     value.title.length > 200
   )
     return null;
-  const base = { projectId: value.projectId, title: value.title };
+  const icon = 'icon' in value ? parseIconDefinition(value.icon) : undefined;
+  const base = { projectId: value.projectId, title: value.title, ...(icon ? { icon } : {}) };
   if ('resource' in value) {
     if ('kind' in value || 'referenceId' in value || 'contentId' in value) return null;
     const resource = value.resource;

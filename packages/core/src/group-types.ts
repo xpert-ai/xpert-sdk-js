@@ -1,5 +1,5 @@
 import type { ConversationResourceTarget } from './conversation-resource-types.js';
-import type { ChatMessage } from './schema.js';
+import type { ChatMessage, IconDefinition } from './schema.js';
 import type { XpertProjectTypeRef } from './schema.js';
 import type { RuntimeCapabilitiesSelection } from './schema.js';
 import type { RuntimeResourcesSelection } from './runtime-resources.js';
@@ -59,6 +59,8 @@ export interface ChatGroupComposerInput {
  * Clicking reauthorizes the resource through the current conversation's host adapter.
  */
 export interface ChatGroupResourceLink {
+  /** Public type icon captured by the host when publishing. Optional for legacy links; never an access grant. */
+  icon?: IconDefinition;
   /** Canonical locator shared with discovery and Workbench. Contains no access grant. */
   resource: ConversationResourceTarget;
   /** Receiving group's runtime Project; checked before opening, never a source Project override. */
