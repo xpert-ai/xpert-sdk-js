@@ -1,5 +1,15 @@
 # @xpert-ai/xpert-sdk
 
+## 0.24.0
+
+### Minor Changes
+
+- 1645e1e: Preserve optional provider-declared resource icons in group history and navigation events, with graceful fallback for legacy or malformed decorative metadata.
+
+### Patch Changes
+
+- d4c63b5: Document and type the current-group message navigation target and its public message anchor.
+
 ## 0.23.0
 
 ### Minor Changes
