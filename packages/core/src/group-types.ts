@@ -1,3 +1,4 @@
+import type { ConversationResourceTarget } from './conversation-resource-types.js';
 import type { ChatMessage } from './schema.js';
 import type { XpertProjectTypeRef } from './schema.js';
 import type { RuntimeCapabilitiesSelection } from './schema.js';
@@ -55,14 +56,14 @@ export interface ChatGroupComposerInput {
 }
 /**
  * Server-authored clickable entry persisted in message history, not an open-on-load instruction.
- * Clicking must reauthorize the reference through the current group's transport.
+ * Clicking reauthorizes the resource through the current conversation's host adapter.
  */
 export interface ChatGroupResourceLink {
-  /** Accepted reference ID, not a source Artifact ID or public share token. */
-  referenceId: string;
-  /** Receiving group's runtime Project; never switch to the source authoring Project. */
+  /** Canonical locator shared with discovery and Workbench. Contains no access grant. */
+  resource: ConversationResourceTarget;
+  /** Receiving group's runtime Project; checked before opening, never a source Project override. */
   projectId: string;
-  /** Display label only; do not infer identity or resource type from it. */
+  /** Display label only; never use it to infer resource identity or type. */
   title: string;
 }
 /** Live, requester-addressed navigation event; consumers match the local send and deduplicate it. */

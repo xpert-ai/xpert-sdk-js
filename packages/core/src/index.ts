@@ -335,3 +335,4 @@ export * from './thread-control-view.js';
 export * from './content.js';
 
 export type * from './resource-analysis-types.js';
+export * from './conversation-resource-types.js';

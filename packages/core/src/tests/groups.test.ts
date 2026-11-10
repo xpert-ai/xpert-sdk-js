@@ -201,9 +201,27 @@ describe('group client', () => {
   });
   it('routes structured messages through configured authentication without author fields', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'm' }), {
-        headers: { 'content-type': 'application/json' },
-      })
+      new Response(
+        JSON.stringify({
+          id: 'm',
+          clientMessageId: 'retry-id',
+          sequence: 1,
+          text: '@E hello',
+          createdAt: '2026-11-10T00:00:00Z',
+          deliveries: [],
+          communication: {
+            intent: 'request',
+            senderId: 'viewer',
+            recipientIds: ['e'],
+            rootMessageId: 'm',
+            rootUserId: 'viewer',
+            hop: 0,
+          },
+        }),
+        {
+          headers: { 'content-type': 'application/json' },
+        }
+      )
     );
     const client = new Client({
       apiUrl: 'https://example.test/api/ai',
@@ -325,13 +343,16 @@ it('validates resource navigation targets without trusting partial events', () =
   const request = {
     requestId: id,
     clientMessageId: id,
-    referenceId: id,
+    resource: { kind: 'group-reference', id },
     projectId: id,
     title: 'Inventory',
   };
   expect(isGroupEvent({ type: 'resource_open', request })).toBe(true);
   expect(
-    isGroupEvent({ type: 'resource_open', request: { ...request, referenceId: '../foreign' } })
+    isGroupEvent({
+      type: 'resource_open',
+      request: { ...request, resource: { kind: 'group-reference', id: '../foreign' } },
+    })
   ).toBe(false);
   expect(isGroupEvent({ type: 'resource_open', request: { title: 'Inventory' } })).toBe(false);
 });

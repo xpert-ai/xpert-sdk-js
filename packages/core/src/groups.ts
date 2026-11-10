@@ -1,3 +1,14 @@
+import {
+  isCanonicalResourceLink,
+  isGroupResourceLinkWire,
+  isResourceUuid,
+  normalizeGroupMessage,
+  normalizeGroupSnapshot,
+  parseGroupResourceLink,
+  type GroupEventWire,
+  type GroupMessageWire,
+  type GroupSnapshotWire,
+} from './group-resource-links.js';
 import { GroupArtifactsClient } from './group-artifacts.js';
 import type {
   ChatGroupProject,
@@ -94,14 +105,16 @@ export class GroupsClient {
   create(input: ChatGroupCreateInput, options?: GroupRequestOptions): Promise<{ id: string }> {
     return this.transport.json('/groups', { ...options, method: 'POST', json: input });
   }
-  get(
+  async get(
     groupId: string,
     options?: GroupRequestOptions & { before?: number; limit?: number }
   ): Promise<ChatGroupSnapshot> {
-    return this.transport.json(`/groups/${encodeURIComponent(groupId)}`, {
-      signal: options?.signal,
-      params: { before: options?.before, limit: options?.limit },
-    });
+    return normalizeGroupSnapshot(
+      await this.transport.json<GroupSnapshotWire>(`/groups/${encodeURIComponent(groupId)}`, {
+        signal: options?.signal,
+        params: { before: options?.before, limit: options?.limit },
+      })
+    );
   }
   runtime(
     groupId: string,
@@ -124,16 +137,21 @@ export class GroupsClient {
       options
     );
   }
-  send(
+  async send(
     groupId: string,
     input: ChatGroupSendInput,
     options?: GroupRequestOptions
   ): Promise<ChatGroupMessage> {
-    return this.transport.json(`/groups/${encodeURIComponent(groupId)}/messages`, {
-      ...options,
-      method: 'POST',
-      json: input,
-    });
+    return normalizeGroupMessage(
+      await this.transport.json<GroupMessageWire>(
+        `/groups/${encodeURIComponent(groupId)}/messages`,
+        {
+          ...options,
+          method: 'POST',
+          json: input,
+        }
+      )
+    );
   }
   addMember(
     groupId: string,
@@ -221,38 +239,28 @@ export class GroupsClient {
     )) {
       if (item.event === 'error') throw new Error('Group stream failed');
       if (item.event !== 'group') continue;
-      if (!isGroupEvent(item.data)) throw new Error('Invalid group stream event');
-      if (item.data.type === 'snapshot' && item.data.snapshot.id !== groupId)
+      const data = parseGroupEvent(item.data);
+      if (!data) throw new Error('Invalid group stream event');
+      if (data.type === 'snapshot' && data.snapshot.id !== groupId)
         throw new Error('Group stream scope mismatch');
-      yield { id: item.id, data: item.data };
+      yield { id: item.id, data };
     }
   }
 }
 
-/** Validate the discriminant and payload at the streaming transport boundary. */
-export function isGroupEvent(value: unknown): value is ChatGroupEvent {
+/** Validate legacy wire payloads only at the transport boundary. */
+function isGroupEventWire(value: unknown): value is GroupEventWire {
   if (!value || typeof value !== 'object' || !('type' in value)) return false;
   if (value.type === 'resync') return true;
   if (value.type === 'resource_open') {
     if (!('request' in value) || !value.request || typeof value.request !== 'object') return false;
     const r = value.request;
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return (
+      isGroupResourceLinkWire(r) &&
       'requestId' in r &&
-      typeof r.requestId === 'string' &&
-      uuid.test(r.requestId) &&
+      isResourceUuid(r.requestId) &&
       'clientMessageId' in r &&
-      typeof r.clientMessageId === 'string' &&
-      uuid.test(r.clientMessageId) &&
-      'referenceId' in r &&
-      typeof r.referenceId === 'string' &&
-      uuid.test(r.referenceId) &&
-      'projectId' in r &&
-      typeof r.projectId === 'string' &&
-      uuid.test(r.projectId) &&
-      'title' in r &&
-      typeof r.title === 'string' &&
-      r.title.length <= 200
+      isResourceUuid(r.clientMessageId)
     );
   }
   if (value.type === 'text')
@@ -350,7 +358,7 @@ function isMember(v: unknown): v is ChatGroupParticipant {
     typeof v.active === 'boolean'
   );
 }
-function isMessage(v: unknown): v is ChatGroupMessage {
+function isMessage(v: unknown): v is GroupMessageWire {
   if (
     !v ||
     typeof v !== 'object' ||
@@ -387,6 +395,8 @@ function isMessage(v: unknown): v is ChatGroupMessage {
     (!('replyToMessageId' in c) || typeof c.replyToMessageId === 'string') &&
     (!('replyStage' in c) ||
       (c.intent === 'reply' && (c.replyStage === 'progress' || c.replyStage === 'final'))) &&
+    (!('resourceLinks' in c) ||
+      (Array.isArray(c.resourceLinks) && c.resourceLinks.every(isGroupResourceLinkWire))) &&
     'deliveries' in v &&
     Array.isArray(v.deliveries) &&
     v.deliveries.every(
@@ -402,4 +412,36 @@ function isMessage(v: unknown): v is ChatGroupMessage {
         )
     )
   );
+}
+
+/** Decode compatibility payloads before they enter typed group state or UI navigation. */
+export function parseGroupEvent(value: unknown): ChatGroupEvent | null {
+  if (!isGroupEventWire(value)) return null;
+  if (value.type === 'snapshot')
+    return { type: 'snapshot', snapshot: normalizeGroupSnapshot(value.snapshot) };
+  if (value.type === 'resource_open') {
+    const link = parseGroupResourceLink(value.request);
+    return link
+      ? {
+          type: 'resource_open',
+          request: {
+            ...link,
+            requestId: value.request.requestId,
+            clientMessageId: value.request.clientMessageId,
+          },
+        }
+      : null;
+  }
+  return value;
+}
+
+/** Type guard for the canonical contract; legacy wire messages must go through parseGroupEvent. */
+export function isGroupEvent(value: unknown): value is ChatGroupEvent {
+  if (!isGroupEventWire(value)) return false;
+  if (value.type === 'resource_open') return isCanonicalResourceLink(value.request);
+  if (value.type === 'snapshot')
+    return value.snapshot.messages.every(
+      (message) => message.communication.resourceLinks?.every(isCanonicalResourceLink) ?? true
+    );
+  return true;
 }
