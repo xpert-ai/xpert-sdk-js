@@ -1,5 +1,16 @@
 # @xpert-ai/xpert-sdk
 
+## 0.23.0
+
+### Minor Changes
+
+- e838e53: Expose discriminated conversation resource targets and the generic Workbench resource-open command. Support Project content entries alongside accepted group references while retaining compatibility with historical reference messages.
+
+  Normalize legacy group resource links at HTTP history, send-response and SSE boundaries. Public message and event types expose one canonical resource locator; malformed or conflicting identities are rejected before reaching consumers.
+
+- 6499986: Expose optional server-filtered group display snapshots alongside text. Keep presentation payloads opaque to the transport, preserve them in history and stream snapshots, and document inert rendering and authorization boundaries.
+- 530b4d5: Expose explicit group reply stages for partial and final answers. Validate stages in group events while retaining compatibility with legacy replies without a stage.
+
 ## 0.22.0
 
 ### Minor Changes
