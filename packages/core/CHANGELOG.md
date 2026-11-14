@@ -1,5 +1,12 @@
 # @xpert-ai/xpert-sdk
 
+## 0.25.0
+
+### Minor Changes
+
+- 1e25196: Add explicit delegated-results execution and bounded controls to resource analysis policies, with separate receiving-owner consent. Existing callers retain viewer-permissions or view-only access.
+- 1e25196: Add authenticated ViewHosts local-draft bindings and a trusted-host IndexedDB bridge. Draft recovery checks current resource access; opaque plugin frames cannot choose storage namespaces. Writes use optimistic revisions, enforce byte/count quotas, and preserve existing drafts on failures.
+
 ## 0.24.0
 
 ### Minor Changes
