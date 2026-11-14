@@ -338,7 +338,4 @@ export * from './content.js';
 export type * from './resource-analysis-types.js';
 export * from './conversation-resource-types.js';
 
-export * from './local-draft-store.js';
-
-export * from './local-draft-bridge.js';
-export type { XpertViewLocalDraftBinding, WorkbenchContentDraftRequest } from './view-extension.js';
+export type { XpertViewLocalDraftBinding, WorkbenchContentDraftRequest, LocalDraftSummary, LocalDraftValue } from './view-extension.js';

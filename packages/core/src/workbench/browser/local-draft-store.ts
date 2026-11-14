@@ -1,14 +1,31 @@
-import type { XpertViewLocalDraftBinding } from './view-extension.js';
+import type {
+  LocalDraftSummary,
+  LocalDraftValue,
+  XpertViewLocalDraftBinding,
+} from '../../view-extension.js';
 
-export interface LocalDraftSummary {
-  draftId: string;
-  revision: number;
-  updatedAt: number;
-  bytes: number;
+/** Storage budgets chosen by the trusted host, never by an embedded view.
+ * Total bytes and count cover this runtime's database across all scopes on the
+ * current origin. Hosts sharing an origin should agree on these budgets. */
+export interface LocalDraftStorageLimits {
+  /** Per-draft UTF-8 byte budget, further capped by the server binding. */
+  readonly maxDraftBytes: number;
+  readonly maxTotalBytes: number;
+  readonly maxDrafts: number;
 }
-export interface LocalDraftValue extends LocalDraftSummary {
-  content: string;
+
+/** Validate and snapshot host configuration so later mutation cannot change an active store. */
+export function snapshotStorageLimits(limits: LocalDraftStorageLimits): LocalDraftStorageLimits {
+  const { maxDraftBytes, maxTotalBytes, maxDrafts } = limits;
+  if (
+    [maxDraftBytes, maxTotalBytes, maxDrafts].some(
+      (value) => !Number.isSafeInteger(value) || value < 1
+    )
+  )
+    throw new LocalDraftStorageError('invalid');
+  return { maxDraftBytes, maxTotalBytes, maxDrafts };
 }
+
 interface Metadata extends LocalDraftSummary {
   key: string;
   scopeKey: string;
@@ -19,9 +36,6 @@ export class LocalDraftStorageError extends Error {
   }
 }
 const DATABASE = 'xpert-workbench-local-drafts-v1';
-const MAX_DRAFT_BYTES = 20 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 50 * 1024 * 1024;
-const MAX_DRAFTS = 20;
 const draftIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -78,8 +92,7 @@ function metadata(value: unknown): Metadata {
     !('bytes' in value) ||
     typeof value.bytes !== 'number' ||
     !Number.isSafeInteger(value.bytes) ||
-    value.bytes < 0 ||
-    value.bytes > MAX_DRAFT_BYTES
+    value.bytes < 0
   )
     throw new LocalDraftStorageError('invalid');
   return {
@@ -100,8 +113,15 @@ const summary = ({ draftId, revision, updatedAt, bytes }: Metadata): LocalDraftS
 
 /** Use only in a trusted host, after obtaining a binding through its authenticated
  * ViewHosts client. Opaque iframes never get IndexedDB access or choose scopeKey.
- * Quota failures retain the existing drafts; nothing is silently evicted. */
-export function createLocalDraftStore(binding: XpertViewLocalDraftBinding) {
+ * This adapter supplies persistence and atomic revision checks, not resource ACLs.
+ * Quota failures retain drafts; lowering a budget must not prevent recovery of
+ * older drafts. Nothing is silently evicted, and no database opens at import time. */
+export function createLocalDraftStore(
+  binding: XpertViewLocalDraftBinding,
+  limits: LocalDraftStorageLimits
+) {
+  const { maxDraftBytes, maxTotalBytes, maxDrafts } = snapshotStorageLimits(limits);
+  binding = { ...binding };
   if (
     !/^[0-9a-f]{64}$/.test(binding.scopeKey) ||
     !binding.resourceId ||
@@ -109,7 +129,7 @@ export function createLocalDraftStore(binding: XpertViewLocalDraftBinding) {
     binding.maxBytes < 1
   )
     throw new LocalDraftStorageError('invalid');
-  const limit = Math.min(binding.maxBytes, MAX_DRAFT_BYTES);
+  const limit = Math.min(binding.maxBytes, maxDraftBytes);
   const key = (draftId: string) => {
     if (!draftIdPattern.test(draftId)) throw new LocalDraftStorageError('invalid');
     return `${binding.scopeKey}:${draftId}`;
@@ -201,9 +221,9 @@ export function createLocalDraftStore(binding: XpertViewLocalDraftBinding) {
         const all: unknown[] = await result(entries.getAll());
         const records = all.map(metadata);
         if (
-          (!current && records.length >= MAX_DRAFTS) ||
+          (!current && records.length >= maxDrafts) ||
           records.reduce((sum, row) => sum + row.bytes, 0) - (current?.bytes ?? 0) + bytes >
-            MAX_TOTAL_BYTES
+            maxTotalBytes
         )
           throw new LocalDraftStorageError('limit');
         const record: Metadata = {

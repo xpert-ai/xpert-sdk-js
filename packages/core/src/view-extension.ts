@@ -663,3 +663,14 @@ export type WorkbenchContentDraftRequest = { resourceId: string } & (
   | { operation: 'write'; draftId: string; expectedRevision: number; content: string }
   | { operation: 'delete'; draftId: string; expectedRevision: number }
 )
+
+/** Portable recovery metadata returned by the Workbench draft protocol. */
+export interface LocalDraftSummary {
+  draftId: string;
+  revision: number;
+  updatedAt: number;
+  bytes: number;
+}
+export interface LocalDraftValue extends LocalDraftSummary {
+  content: string;
+}

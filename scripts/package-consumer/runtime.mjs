@@ -4,13 +4,15 @@ import { once } from 'node:events';
 import {
   ASSISTANT_COMPOSER_INSERT_COMMAND,
   WORKBENCH_CONTENT_DRAFT_COMMAND,
-  createLocalDraftBridge,
-  createLocalDraftStore,
   Client,
   HTTPError,
   isThreadControlView,
   mergeThreadControlView,
 } from '@xpert-ai/xpert-sdk';
+import * as sdk from '@xpert-ai/xpert-sdk';
+import { createLocalDraftBridge, createLocalDraftStore } from '@xpert-ai/xpert-sdk/workbench/browser';
+assert.equal('createLocalDraftBridge' in sdk, false);
+assert.equal('createLocalDraftStore' in sdk, false);
 assert.equal(ASSISTANT_COMPOSER_INSERT_COMMAND, 'assistant.composer.insert');
 assert.equal(WORKBENCH_CONTENT_DRAFT_COMMAND, 'workbench.content.draft');
 assert.equal(typeof createLocalDraftBridge, 'function');
