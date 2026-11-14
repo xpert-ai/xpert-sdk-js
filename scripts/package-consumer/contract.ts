@@ -2,8 +2,6 @@
 import {
   ASSISTANT_COMPOSER_INSERT_COMMAND,
   WORKBENCH_CONTENT_DRAFT_COMMAND,
-  createLocalDraftBridge,
-  createLocalDraftStore,
   type WorkbenchContentDraftRequest,
   type XpertViewLocalDraftBinding,
   type AssistantComposerInsertPayload,
@@ -21,6 +19,8 @@ import {
   type SharedConversation,
 } from '@xpert-ai/xpert-sdk';
 
+import { createLocalDraftBridge, createLocalDraftStore, type LocalDraftBridgeOptions } from '@xpert-ai/xpert-sdk/workbench/browser';
+
 // Verify the installed package exposes both the wire command and its complete draft payload.
 const composerCommand: 'assistant.composer.insert' = ASSISTANT_COMPOSER_INSERT_COMMAND;
 const composerPayload: AssistantComposerInsertPayload = {
@@ -34,7 +34,14 @@ void [composerCommand, composerPayload, textOnlyPayload];
 const draftCommand: 'workbench.content.draft' = WORKBENCH_CONTENT_DRAFT_COMMAND;
 const draftBinding: XpertViewLocalDraftBinding = { resourceId: 'resource', scopeKey: 'a'.repeat(64), maxBytes: 1024 };
 const draftRequest: WorkbenchContentDraftRequest = { resourceId: 'resource', operation: 'list' };
-void [draftCommand, draftBinding, draftRequest, createLocalDraftBridge, createLocalDraftStore];
+const draftOptions: LocalDraftBridgeOptions = {
+  storage: { maxDraftBytes: 1024, maxTotalBytes: 4096, maxDrafts: 4 },
+  allowCachedWrites: false,
+  maxCachedBindings: 4,
+};
+createLocalDraftStore(draftBinding, draftOptions.storage);
+createLocalDraftBridge(async () => draftBinding, draftOptions);
+void [draftCommand, draftRequest];
 
 const client = new Client({ apiUrl: 'http://127.0.0.1:1/api/ai' });
 const options: ReadRequestOptions = { signal: new AbortController().signal };

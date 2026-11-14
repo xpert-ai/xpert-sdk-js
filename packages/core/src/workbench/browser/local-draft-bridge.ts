@@ -1,25 +1,59 @@
-import { createLocalDraftStore, LocalDraftStorageError } from './local-draft-store.js';
-import type { WorkbenchContentDraftRequest, XpertViewLocalDraftBinding } from './view-extension.js';
+import {
+  createLocalDraftStore,
+  LocalDraftStorageError,
+  snapshotStorageLimits,
+  type LocalDraftStorageLimits,
+} from './local-draft-store.js';
+import type {
+  WorkbenchContentDraftRequest,
+  XpertViewLocalDraftBinding,
+} from '../../view-extension.js';
 
-/** One bridge per authenticated host/view/context lifetime. Recovery always checks
- * current server authorization. Already authorized writes can survive offline;
- * their contents and storage namespace never leave this browser. */
+/** Host-owned policy. Do not populate these options from remote-view messages. */
+export interface LocalDraftBridgeOptions {
+  readonly storage: LocalDraftStorageLimits;
+  /** Reuse a successful binding for writes/deletes during this bridge's lifetime.
+   * Reads/listing always reauthorize. False requires authorization for every request. */
+  readonly allowCachedWrites: boolean;
+  /** Bound the number of resource bindings retained by one view instance. */
+  readonly maxCachedBindings: number;
+}
+
+/** Adapt untrusted draft commands to browser persistence in the trusted host.
+ * The injected authorizer owns server access checks; this bridge never grants access.
+ * Create one per authenticated host/view/context lifetime and discard it on change.
+ * Abort in-flight requests on disposal so results cannot reach a replacement view.
+ * Cached writes, when explicitly enabled, save only local data and never publish it. */
 export function createLocalDraftBridge(
-  authorize: (resourceId: string, signal?: AbortSignal) => Promise<XpertViewLocalDraftBinding>
+  authorize: (resourceId: string, signal?: AbortSignal) => Promise<XpertViewLocalDraftBinding>,
+  options: LocalDraftBridgeOptions
 ) {
+  const { allowCachedWrites, maxCachedBindings } = options;
+  const storage = snapshotStorageLimits(options.storage);
+  if (
+    typeof allowCachedWrites !== 'boolean' ||
+    !Number.isSafeInteger(maxCachedBindings) ||
+    maxCachedBindings < 1
+  )
+    throw new LocalDraftStorageError('invalid');
   const bindings = new Map<string, XpertViewLocalDraftBinding>();
   return async (payload: unknown, signal?: AbortSignal): Promise<unknown> => {
     const request = parseDraftRequest(payload);
     signal?.throwIfAborted();
     let binding = bindings.get(request.resourceId);
-    if (!binding || request.operation === 'list' || request.operation === 'read') {
+    if (
+      !allowCachedWrites ||
+      !binding ||
+      request.operation === 'list' ||
+      request.operation === 'read'
+    ) {
       try {
-        binding = await authorize(request.resourceId, signal);
+        binding = { ...(await authorize(request.resourceId, signal)) };
         signal?.throwIfAborted();
         if (binding.resourceId !== request.resourceId) throw new LocalDraftStorageError('invalid');
         // Validate before caching. Limit the number of resources a frame can pin.
-        createLocalDraftStore(binding);
-        if (!bindings.has(request.resourceId) && bindings.size >= 16)
+        createLocalDraftStore(binding, storage);
+        if (!bindings.has(request.resourceId) && bindings.size >= maxCachedBindings)
           throw new LocalDraftStorageError('limit');
         bindings.set(request.resourceId, binding);
       } catch (error) {
@@ -28,7 +62,7 @@ export function createLocalDraftBridge(
       }
     }
     signal?.throwIfAborted();
-    const store = createLocalDraftStore(binding);
+    const store = createLocalDraftStore(binding, storage);
     let data: unknown;
     switch (request.operation) {
       case 'list':

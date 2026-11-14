@@ -11,6 +11,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./workbench/browser": {
+      "types": "./dist/workbench/browser/index.d.ts",
+      "import": "./dist/workbench/browser/index.js",
+      "require": "./dist/workbench/browser/index.js"
     }
   },
   "files": [
