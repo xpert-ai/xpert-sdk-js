@@ -1,6 +1,11 @@
 // This file is compiled in a fresh consumer with no paths aliases and skipLibCheck=false.
 import {
   ASSISTANT_COMPOSER_INSERT_COMMAND,
+  WORKBENCH_CONTENT_DRAFT_COMMAND,
+  createLocalDraftBridge,
+  createLocalDraftStore,
+  type WorkbenchContentDraftRequest,
+  type XpertViewLocalDraftBinding,
   type AssistantComposerInsertPayload,
   Client,
   HTTPError,
@@ -25,6 +30,11 @@ const composerPayload: AssistantComposerInsertPayload = {
 };
 const textOnlyPayload: AssistantComposerInsertPayload = { text: 'Create a dashboard.' };
 void [composerCommand, composerPayload, textOnlyPayload];
+
+const draftCommand: 'workbench.content.draft' = WORKBENCH_CONTENT_DRAFT_COMMAND;
+const draftBinding: XpertViewLocalDraftBinding = { resourceId: 'resource', scopeKey: 'a'.repeat(64), maxBytes: 1024 };
+const draftRequest: WorkbenchContentDraftRequest = { resourceId: 'resource', operation: 'list' };
+void [draftCommand, draftBinding, draftRequest, createLocalDraftBridge, createLocalDraftStore];
 
 const client = new Client({ apiUrl: 'http://127.0.0.1:1/api/ai' });
 const options: ReadRequestOptions = { signal: new AbortController().signal };

@@ -43,6 +43,8 @@ export class GroupArtifactsClient {
       expectedRevision: number;
       /** Explicitly accept the offered analysis scope. Omitted/false accepts viewing only. */
       acceptAnalysis?: boolean;
+      /** Separate consent required for delegated_results; omission accepts view only. */
+      acceptDelegatedResults?: boolean;
     },
     options?: GroupRequestOptions
   ): Promise<GroupArtifactReference> {

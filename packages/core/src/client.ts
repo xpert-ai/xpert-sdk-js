@@ -1,3 +1,4 @@
+import type { XpertViewLocalDraftBinding } from './view-extension.js';
 import type {
   ConversationShareCreate,
   ConversationShareCreated,
@@ -3152,6 +3153,19 @@ export class ViewHostsClient extends BaseClient {
         signal: options?.signal,
         headers: createViewRuntimeHeaders(options?.runtimeScope),
       }
+    );
+  }
+
+  getLocalDraftBinding(
+    hostType: XpertViewHostType,
+    hostId: string,
+    viewKey: string,
+    resourceId: string,
+    options?: XpertViewRequestOptions
+  ): Promise<XpertViewLocalDraftBinding> {
+    return this.fetch<XpertViewLocalDraftBinding>(
+      `/${encodeViewPathSegment(hostType)}/${encodeViewPathSegment(hostId)}/views/${encodeViewPathSegment(viewKey)}/local-draft-binding`,
+      { params: { resourceId }, signal: options?.signal, headers: createViewRuntimeHeaders(options?.runtimeScope) }
     );
   }
 

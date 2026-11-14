@@ -53,6 +53,19 @@ describe("ViewHostsClient", () => {
     expect(ASSISTANT_CITATION_OPEN_EVENT).toBe("assistant.citation.open");
   });
 
+  it("authorizes local drafts through the scoped view host endpoint", async () => {
+    const binding = { resourceId: 'resource/1', scopeKey: 'a'.repeat(64), maxBytes: 1024 };
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(binding));
+    const client = new Client({ apiUrl: 'https://xpert.example/api/ai', callerOptions: { fetch: fetchMock } });
+    const signal = new AbortController().signal;
+    await expect(client.viewHosts.getLocalDraftBinding('agent', 'host/1', 'provider__view', 'resource/1',
+      { runtimeScope: { projectId: 'project-1' }, signal })).resolves.toEqual(binding);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain('/api/view-hosts/agent/host%2F1/views/provider__view/local-draft-binding?resourceId=resource%2F1');
+    expect(new Headers(init?.headers).get(XPERT_VIEW_PROJECT_ID_HEADER)).toBe('project-1');
+    expect(init?.signal).toBe(signal);
+  });
+
   it("loads slot manifests and an individual manifest", async () => {
     const manifest = {
       key: "provider__view",

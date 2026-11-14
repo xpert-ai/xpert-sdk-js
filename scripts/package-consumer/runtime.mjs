@@ -3,12 +3,18 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import {
   ASSISTANT_COMPOSER_INSERT_COMMAND,
+  WORKBENCH_CONTENT_DRAFT_COMMAND,
+  createLocalDraftBridge,
+  createLocalDraftStore,
   Client,
   HTTPError,
   isThreadControlView,
   mergeThreadControlView,
 } from '@xpert-ai/xpert-sdk';
 assert.equal(ASSISTANT_COMPOSER_INSERT_COMMAND, 'assistant.composer.insert');
+assert.equal(WORKBENCH_CONTENT_DRAFT_COMMAND, 'workbench.content.draft');
+assert.equal(typeof createLocalDraftBridge, 'function');
+assert.equal(typeof createLocalDraftStore, 'function');
 const view = {
   version: 1,
   threadId: 'thread/id',
