@@ -209,6 +209,7 @@ export {
   ASSISTANT_CONTEXT_SET_COMMAND,
   KNOWLEDGEBASE_OPEN_CITATION_EFFECT,
   WORKBENCH_ASSISTANT_CONVERSATION_TARGET,
+  WORKBENCH_CONTENT_DRAFT_COMMAND,
   WORKBENCH_FILE_OPEN_COMMAND,
   WORKBENCH_KNOWLEDGEBASE_DOCUMENTS_TARGET,
   WORKBENCH_NAVIGATION_OPEN_COMMAND,
@@ -336,3 +337,8 @@ export * from './content.js';
 
 export type * from './resource-analysis-types.js';
 export * from './conversation-resource-types.js';
+
+export * from './local-draft-store.js';
+
+export * from './local-draft-bridge.js';
+export type { XpertViewLocalDraftBinding, WorkbenchContentDraftRequest } from './view-extension.js';

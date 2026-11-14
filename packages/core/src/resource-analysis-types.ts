@@ -1,10 +1,12 @@
 /**
  * Consent to disclose bounded query results to all members of the receiving group.
  * The source manager proposes it and the group owner accepts it separately from viewing.
- * Queries still use the requesting human's data permissions, never the source owner's identity.
+ * Viewer permissions remain the default. Delegated results require separate explicit consent.
  * Omit the policy for view-only access; empty collections are not wildcard permissions.
  */
 export interface ResourceAnalysisPolicy {
+  /** Delegation uses the issuer's freshly checked authority for the accepted result scope only. */
+  execution?: 'viewer_permissions' | 'delegated_results';
   /**
    * bindings allows declared parameters and field projection over published dataset results.
    * explore also allows additional filters, grouping, aggregation and sorting in those datasets.
@@ -17,6 +19,8 @@ export interface ResourceAnalysisPolicy {
     key: string;
     /** Nonempty unique field-ID allowlist, used for projection, filtering and aggregation. */
     fields: string[];
+    /** Allowed control values; all other controls retain the pinned published defaults. */
+    controlValues?: Record<string, Array<string | number | boolean | null>>;
     /** Fixed AND predicates applied before data reaches the Agent; queries cannot remove them. */
     filters: Array<{
       /** Approved field ID, never a native query expression. */
