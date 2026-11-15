@@ -2,6 +2,38 @@ import { describe, expect, it, vi } from 'vitest';
 import { Client } from '../index.js';
 
 describe('ContentClient', () => {
+  it('resolves Project files with the shared authenticated transport and cancellation', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(
+        new Response('{"viewKey":"pptx__editor"}', {
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+    const client = new Client({
+      apiUrl: 'https://example.test/api/ai',
+      callerOptions: { fetch },
+      onRequest: (_url, init) => ({
+        ...init,
+        headers: { ...init.headers, 'x-client-secret': 'test-secret' },
+      }),
+    });
+    const abort = new AbortController();
+    expect(
+      await client.content.resolveFile(
+        { assistantId: 'a/1', projectId: 'p' },
+        { path: 'docs/deck.pptx' },
+        { signal: abort.signal }
+      )
+    ).toEqual({ viewKey: 'pptx__editor' });
+    const [url, request] = fetch.mock.calls[0];
+    expect(new URL(String(url)).pathname).toBe(
+      '/api/ai/assistants/a%2F1/projects/p/content-files/open'
+    );
+    expect(JSON.parse(String(request?.body))).toEqual({ path: 'docs/deck.pptx' });
+    expect(request?.signal).toBe(abort.signal);
+    expect(new Headers(request?.headers).get('x-client-secret')).toBe('test-secret');
+  });
   it('uses the configured SDK transport and scoped credentials for every operation', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()
