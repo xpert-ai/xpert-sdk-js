@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.28.0
+
+### Minor Changes
+
+- 8b5e1a0: Support submitting server-owned message Widget actions in the current thread.
+
 ## 0.27.0
 
 ### Minor Changes
