@@ -954,6 +954,25 @@ export class ThreadsClient<
   TStateType = DefaultValues,
   TUpdateType = TStateType
 > extends BaseClient {
+  /** Dispatch a named server action for one Widget in an assistant message. */
+  async submitWidgetAction(
+    threadId: string,
+    input: { messageId: string; widgetId: string; action: string; context: Record<string, unknown> },
+    options?: ReadRequestOptions
+  ): Promise<{ refresh?: "thread" }> {
+    const segments = [threadId, input.messageId, input.widgetId, input.action];
+    if (segments.some(segment => !segment || segment === "." || segment === "..")) {
+      throw new TypeError("Invalid Widget action address");
+    }
+    const [thread, message, widget, action] = segments.map(encodeURIComponent);
+    return this.fetch(`/threads/${thread}/messages/${message}/widgets/${widget}/actions/${action}`, {
+      method: "POST",
+      json: input.context,
+      signal: options?.signal,
+      emptyResponse: {},
+    });
+  }
+
   /** Reveal completed output after a display pause; does not resume execution. */
   async releaseDisplayPause(threadId: string, pauseId: string): Promise<void> {
     return this.fetch(`/threads/${threadId}/display-pause/${encodeURIComponent(pauseId)}`, {
