@@ -1,4 +1,5 @@
 import type { ThreadControlView } from './thread-control-view.js';
+import type { ConversationSidebarState } from './conversation-sidebar.js';
 import type { JSONSchema7 } from "json-schema";
 import type { RuntimeResourceSkillReference, RuntimeResourcesSelection } from "./runtime-resources.js";
 import type {
@@ -1382,6 +1383,8 @@ export type ChatConversationOptions = Record<string, unknown> & {
 };
 
 export interface ChatConversation {
+  /** Present on personal sidebar listings. Never write through conversations.update. */
+  sidebar?: ConversationSidebarState;
   branchSource?: ConversationBranchSource | null;
   id: string;
   threadId: string;

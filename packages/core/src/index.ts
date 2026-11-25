@@ -1,4 +1,5 @@
 export type * from './conversation-sharing.js';
+export type * from './conversation-sidebar.js';
 
 export {
   Client,

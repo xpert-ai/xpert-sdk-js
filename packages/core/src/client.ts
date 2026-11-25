@@ -1,4 +1,5 @@
 import type { XpertViewLocalDraftBinding } from './view-extension.js';
+import type { ConversationSidebarPatch, ConversationSidebarQuery, ConversationSidebarState } from './conversation-sidebar.js';
 import type {
   ConversationShareCreate,
   ConversationShareCreated,
@@ -3393,6 +3394,23 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** List the current user's private conversations, with pins ordered before pagination. */
+  async listSidebar(query: ConversationSidebarQuery, options?: ReadRequestOptions): Promise<Pagination<ChatConversation>> {
+    return this.fetch('/conversations/sidebar/search', {
+      method: 'POST', json: query, signal: options?.signal,
+    });
+  }
+
+  /** Read personal preferences without retrieving the transcript. */
+  async getSidebar(conversationId: string, options?: ReadRequestOptions): Promise<ConversationSidebarState> {
+    return this.fetch(`/conversations/${encodeURIComponent(conversationId)}/sidebar`, { signal: options?.signal });
+  }
+
+  /** Update only supplied fields. Authorization and persistence belong to the server. */
+  async updateSidebar(conversationId: string, patch: ConversationSidebarPatch): Promise<ConversationSidebarState> {
+    return this.fetch(`/conversations/${encodeURIComponent(conversationId)}/sidebar`, { method: 'PATCH', json: patch });
+  }
+
   /** Personal management requires an interactive user session, never an Assistant client secret. */
   async listMyShares(query?: ConversationShareListQuery): Promise<ConversationShareList> {
     return this.fetch('/conversation-shares', { params: { ...query } });

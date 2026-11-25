@@ -4,6 +4,8 @@ A modern TypeScript monorepo template built with pnpm workspaces, featuring mult
 
 For group Project creation, participant management and the group Composer authorization boundary, see [Group Projects](docs/group-projects.md).
 
+For personal conversation pinning, archiving and paginated history, see [Conversation sidebar](docs/conversation-sidebar.md).
+
 ## 🏗️ Project Structure
 
 ```ini
