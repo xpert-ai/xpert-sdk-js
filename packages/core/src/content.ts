@@ -96,14 +96,14 @@ export class ContentClient {
   constructor(private readonly transport: Pick<WorkbenchTransport, 'json'>) {}
   /** Resolve a file through its live resource owner or an installed file editor. */
   resolveFile(
-    scope: ContentScope,
+    scope: { assistantId: string; projectId?: string },
     file: { path: string; editorKey?: string },
     options?: WorkbenchRequestOptions
   ): Promise<ContentEditorResolution> {
-    if (!scope.assistantId.trim() || !scope.projectId.trim() || !file.path.trim())
-      throw new Error('An Assistant, Project and file are required.');
+    if (!scope.assistantId.trim() || (scope.projectId !== undefined && !scope.projectId.trim()) || !file.path.trim())
+      throw new Error('An Assistant and file are required; a supplied Project must be nonempty.');
     return this.transport.json(
-      `/ai/assistants/${encodeURIComponent(scope.assistantId)}/projects/${encodeURIComponent(scope.projectId)}/content-files/open`,
+      `/ai/assistants/${encodeURIComponent(scope.assistantId)}${scope.projectId ? `/projects/${encodeURIComponent(scope.projectId)}` : ''}/content-files/open`,
       { method: 'POST', json: file, ...options }
     );
   }

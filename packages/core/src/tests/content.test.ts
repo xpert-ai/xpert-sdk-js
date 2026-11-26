@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { Client } from '../index.js';
 
 describe('ContentClient', () => {
+  it('resolves an Assistant workspace without inventing a Project scope', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response('{"viewKey":"office.files__office.file"}', { headers: { 'content-type': 'application/json' } }));
+    const client = new Client({ apiUrl: 'https://example.test/api/ai', callerOptions: { fetch } });
+    await client.content.resolveFile({ assistantId: 'a/1' }, { path: 'data.csv' });
+    expect(new URL(String(fetch.mock.calls[0][0])).pathname).toBe('/api/ai/assistants/a%2F1/content-files/open');
+    expect(() => client.content.resolveFile({ assistantId: 'a', projectId: '' }, { path: 'data.csv' })).toThrow();
+  });
   it('resolves Project files with the shared authenticated transport and cancellation', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()
