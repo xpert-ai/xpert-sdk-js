@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.30.0
+
+### Minor Changes
+
+- afc85a9: Resolve standalone Assistant workspace files through ContentClient.resolveFile without a Project ID. Keep Project routing and reject explicitly empty scope identifiers.
+
 ## 0.29.0
 
 ### Minor Changes
