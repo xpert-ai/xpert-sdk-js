@@ -1,5 +1,11 @@
 # @xpert-ai/xpert-sdk
 
+## 0.29.0
+
+### Minor Changes
+
+- 2b998a4: Add typed personal conversation pin/archive listing, state reads and idempotent updates, including project filters and cancellation.
+
 ## 0.28.0
 
 ### Minor Changes
