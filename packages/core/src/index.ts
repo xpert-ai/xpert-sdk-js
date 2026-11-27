@@ -340,3 +340,4 @@ export type * from './resource-analysis-types.js';
 export * from './conversation-resource-types.js';
 
 export type { XpertViewLocalDraftBinding, WorkbenchContentDraftRequest, LocalDraftSummary, LocalDraftValue } from './view-extension.js';
+export * from './tool-details.js';

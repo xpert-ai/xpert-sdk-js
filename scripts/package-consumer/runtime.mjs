@@ -17,6 +17,25 @@ assert.equal(ASSISTANT_COMPOSER_INSERT_COMMAND, 'assistant.composer.insert');
 assert.equal(WORKBENCH_CONTENT_DRAFT_COMMAND, 'workbench.content.draft');
 assert.equal(typeof createLocalDraftBridge, 'function');
 assert.equal(typeof createLocalDraftStore, 'function');
+assert.equal(typeof sdk.isToolDetailPage, 'function');
+const toolPage = {
+  content: '你好🙂', format: 'text', offset: 0, nextOffset: null,
+  totalCharacters: 4, byteLength: 10,
+};
+const toolClient = new Client({
+  apiUrl: 'https://sdk.invalid/api/ai',
+  callerOptions: {
+    fetch: async (url) => {
+      assert.equal(new URL(url).pathname, '/api/ai/conversations/conversation/tool-details/snapshot');
+      return new Response(JSON.stringify(toolPage), { headers: { 'content-type': 'application/json' } });
+    },
+  },
+});
+assert.equal(sdk.isToolDetailPage(toolPage), true);
+assert.deepEqual(await toolClient.conversations.getToolDetail({
+  conversationId: 'conversation', executionId: 'execution', toolCallId: 'call',
+  phase: 'output', id: 'snapshot', sha256: 'a'.repeat(64),
+}), toolPage);
 const view = {
   version: 1,
   threadId: 'thread/id',

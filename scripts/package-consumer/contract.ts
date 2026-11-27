@@ -17,6 +17,9 @@ import {
   type ConversationShareInfo,
   type ConversationShareList,
   type SharedConversation,
+  type ToolDetailPage,
+  type ToolDetailReference,
+  isToolDetailPage,
 } from '@xpert-ai/xpert-sdk';
 
 import { createLocalDraftBridge, createLocalDraftStore, type LocalDraftBridgeOptions } from '@xpert-ai/xpert-sdk/workbench/browser';
@@ -52,6 +55,14 @@ client.threads.get('thread', options);
 client.runs.get('thread', 'run', options);
 client.conversations.get('conversation', options);
 client.conversations.listThreads('conversation', options);
+
+function checkToolDetails(ref: ToolDetailReference) {
+  const result: Promise<ToolDetailPage> = client.conversations.getToolDetail(ref, {
+    ...options, offset: 0,
+  });
+  return result.then((page) => isToolDetailPage(page));
+}
+void checkToolDetails;
 
 // Sharing methods and public types must remain available from the installed package root.
 function checkConversationSharing() {

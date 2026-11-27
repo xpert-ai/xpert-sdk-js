@@ -12,6 +12,7 @@ import type {
 } from './conversation-sharing.js';
 import { isThreadControlView, type ThreadControlView } from './thread-control-view.js';
 import { ContentClient } from './content.js';
+import { isToolDetailPage, type ToolDetailPage, type ToolDetailReference } from './tool-details.js';
 import { GroupsClient, type GroupTransport } from './groups.js';
 import { activityStreamError, isThreadActivitySnapshot, type ThreadActivitySnapshot } from './thread-activity.js';
 import { workspaceFileContentRoute } from './workspace-file-content.js';
@@ -3394,6 +3395,29 @@ function createViewRuntimeHeaders(
 
 // Conversations Client
 export class ConversationsClient extends BaseClient {
+  /** Read one bounded page using the same authenticated conversation transport. */
+  async getToolDetail(
+    ref: ToolDetailReference,
+    options?: ReadRequestOptions & { offset?: number },
+  ): Promise<ToolDetailPage> {
+    const offset = options?.offset ?? 0;
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      throw new Error('Invalid tool detail offset.');
+    }
+    const { conversationId, id, executionId, toolCallId, phase, sha256 } = ref;
+    const page: unknown = await this.fetch(
+      `/conversations/${encodeURIComponent(conversationId)}/tool-details/${encodeURIComponent(id)}`,
+      {
+        params: { executionId, toolCallId, phase, sha256, offset },
+        signal: options?.signal,
+      },
+    );
+    if (!isToolDetailPage(page) || page.offset !== offset) {
+      throw new Error('Invalid tool detail response.');
+    }
+    return page;
+  }
+
   /** List the current user's private conversations, with pins ordered before pagination. */
   async listSidebar(query: ConversationSidebarQuery, options?: ReadRequestOptions): Promise<Pagination<ChatConversation>> {
     return this.fetch('/conversations/sidebar/search', {
